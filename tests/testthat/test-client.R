@@ -35,6 +35,28 @@ test_that("explicit base_url beats environment", {
   expect_equal(cl$base_url, "https://self.example/api")
 })
 
+test_that("base_url rejects plain-http remote", {
+  expect_error(tl_client(api_key = "k", base_url = "http://evil.example/api"), "https")
+})
+
+test_that("base_url rejects embedded credentials", {
+  expect_error(tl_client(api_key = "k", base_url = "https://user:pass@evil.example"), "credentials")
+})
+
+test_that("base_url rejects a non-http(s) scheme", {
+  expect_error(tl_client(api_key = "k", base_url = "ftp://api.topolab.nl"), "http")
+})
+
+test_that("base_url allows plain-http loopback", {
+  cl <- tl_client(api_key = "k", base_url = "http://127.0.0.1:8080")
+  expect_equal(cl$base_url, "http://127.0.0.1:8080")
+})
+
+test_that("TOPOLAB_BASE_URL env is validated", {
+  withr::local_envvar(TOPOLAB_BASE_URL = "http://evil.example", TOPOLAB_ENV = "")
+  expect_error(tl_client(api_key = "k"), "https")
+})
+
 test_that("tl_metadata returns parsed fields", {
   cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl")
   with_mocks(list("/v1/dataset/nl-domino-poi" = "metadata.json"), {

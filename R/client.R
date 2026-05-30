@@ -18,13 +18,41 @@
   unname(.tl_environments[[key]])
 }
 
+.tl_loopback_hosts <- c("localhost", "127.0.0.1", "::1")
+
+# Reject base URLs that could exfiltrate the API key to an attacker-controlled
+# host: require https (http only for loopback), and forbid embedded credentials.
+.tl_validate_base_url <- function(url) {
+  parsed <- httr2::url_parse(url)
+  scheme <- tolower(parsed$scheme %||% "")
+  if (!scheme %in% c("https", "http")) {
+    stop(topolab_error(sprintf("base_url must use http(s); got '%s'", url),
+                       class = "topolab_configuration_error"))
+  }
+  has_user <- !is.null(parsed$username) && nzchar(parsed$username)
+  has_pass <- !is.null(parsed$password) && nzchar(parsed$password)
+  if (has_user || has_pass) {
+    stop(topolab_error("base_url must not contain credentials (userinfo)",
+                       class = "topolab_configuration_error"))
+  }
+  host <- tolower(parsed$hostname %||% "")
+  if (scheme == "http" && !host %in% .tl_loopback_hosts) {
+    stop(topolab_error(
+      sprintf("base_url must use https for non-loopback host '%s'", host),
+      class = "topolab_configuration_error"))
+  }
+  sub("/$", "", url)
+}
+
 # Resolve the API base URL. Precedence (most specific first):
 # explicit base_url > environment > TOPOLAB_BASE_URL > TOPOLAB_ENV > production.
+# User-supplied URLs (base_url, TOPOLAB_BASE_URL) are validated; the named
+# environments and the production default are trusted https constants.
 .tl_resolve_base_url <- function(base_url, environment) {
-  if (!is.null(base_url) && nzchar(base_url)) return(sub("/$", "", base_url))
+  if (!is.null(base_url) && nzchar(base_url)) return(.tl_validate_base_url(base_url))
   if (!is.null(environment) && nzchar(environment)) return(.tl_environment_url(environment))
   env_base <- Sys.getenv("TOPOLAB_BASE_URL")
-  if (nzchar(env_base)) return(sub("/$", "", env_base))
+  if (nzchar(env_base)) return(.tl_validate_base_url(env_base))
   env_name <- Sys.getenv("TOPOLAB_ENV")
   if (nzchar(env_name)) return(.tl_environment_url(env_name))
   .tl_environments[["production"]]

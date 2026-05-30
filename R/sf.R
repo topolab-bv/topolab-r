@@ -26,5 +26,13 @@ as_sf.default <- function(x, ...) {
       "as_sf() requires the 'sf' package. Install it with install.packages('sf').",
       class = "topolab_configuration_error"))
   }
-  sf::read_sf(jsonlite::toJSON(x, auto_unbox = TRUE, null = "null"))
+  # Write to a temp file and read with st_read():
+  #   * a real .geojson file is GDAL's portable read path (reading inline JSON
+  #     strings is undocumented/GDAL-version-dependent),
+  #   * st_read() returns a plain sf data.frame, so we don't pull in the
+  #     'tibble' package the way read_sf() does.
+  tmp <- tempfile(fileext = ".geojson")
+  on.exit(unlink(tmp), add = TRUE)
+  writeLines(jsonlite::toJSON(x, auto_unbox = TRUE, null = "null"), tmp)
+  sf::st_read(tmp, quiet = TRUE)
 }

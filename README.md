@@ -24,6 +24,9 @@
 install.packages("topolab")
 ```
 
+> **Pre-release:** until the first version is on CRAN, install from GitHub:
+> `remotes::install_github("topolab-bv/topolab-r")`
+
 `as_sf()` needs the [`sf`](https://r-spatial.github.io/sf/) package (a `Suggests`
 dependency); on Linux you may also need the system GDAL, GEOS, and PROJ
 libraries that `sf` requires.

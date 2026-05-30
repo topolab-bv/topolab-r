@@ -20,6 +20,8 @@
 
 ## Install
 
+📖 **Docs:** [topolab-bv.github.io/topolab-r](https://topolab-bv.github.io/topolab-r/) · full platform docs at [docs.topolab.nl](https://docs.topolab.nl)
+
 ```r
 install.packages("topolab")
 ```

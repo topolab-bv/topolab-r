@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 320" width="1280" height="320" role="img" aria-label="topolab — the R client for the Topolab geospatial data API">
+  <title>topolab — R SDK</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0E7C7B"/>
+      <stop offset="1" stop-color="#0B1F2A"/>
+    </linearGradient>
+    <mask id="mk">
+      <rect width="64" height="64" fill="black"/>
+      <g fill="none" stroke="white" stroke-width="3.6">
+        <circle cx="32" cy="32" r="7"/>
+        <circle cx="32" cy="32" r="14"/>
+        <circle cx="32" cy="32" r="21"/>
+        <circle cx="32" cy="32" r="28"/>
+      </g>
+      <path d="M16 12 H48 V21 H37 V50 H27 V21 H16 Z" fill="black"/>
+    </mask>
+    <clipPath id="frame"><rect width="1280" height="320" rx="0"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#frame)">
+    <rect width="1280" height="320" fill="url(#bg)"/>
+    <g fill="none" stroke="#FFFFFF" stroke-opacity="0.07" stroke-width="2">
+      <circle cx="1110" cy="160" r="70"/>
+      <circle cx="1110" cy="160" r="120"/>
+      <circle cx="1110" cy="160" r="170"/>
+      <circle cx="1110" cy="160" r="220"/>
+      <circle cx="1110" cy="160" r="270"/>
+    </g>
+
+    <g transform="translate(104 108) scale(1.62)">
+      <rect width="64" height="64" fill="#FFFFFF" mask="url(#mk)"/>
+    </g>
+
+    <text x="248" y="158" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
+          font-size="92" font-weight="800" letter-spacing="0.5" fill="#FFFFFF">topolab</text>
+    <text x="252" y="204" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
+          font-size="27" font-weight="500" fill="#E8DFD3">The R client for the Topolab geospatial data API</text>
+
+    <rect x="252" y="232" width="360" height="44" rx="22" fill="#FFFFFF" fill-opacity="0.12"/>
+    <text x="274" y="260" font-family="'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace"
+          font-size="21" fill="#FFFFFF">install.packages("topolab")</text>
+
+    <rect x="638" y="232" width="74" height="44" rx="22" fill="#E3A857"/>
+    <text x="675" y="260" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, sans-serif"
+          font-size="20" font-weight="700" fill="#0B1F2A">R</text>
+  </g>
+</svg>

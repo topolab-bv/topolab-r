@@ -2,4 +2,9 @@
 ^\.Rproj\.user$
 ^\.github$
 ^LICENSE\.md$
-^/tmp/
+^assets$
+^CONTRIBUTING\.md$
+^README\.md$
+^.*\.tar\.gz$
+^.*\.Rcheck$
+^build\.log$

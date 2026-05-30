@@ -5,17 +5,7 @@
       <stop offset="0" stop-color="#0E7C7B"/>
       <stop offset="1" stop-color="#0B1F2A"/>
     </linearGradient>
-    <mask id="mk">
-      <rect width="64" height="64" fill="black"/>
-      <g fill="none" stroke="white" stroke-width="3.6">
-        <circle cx="32" cy="32" r="7"/>
-        <circle cx="32" cy="32" r="14"/>
-        <circle cx="32" cy="32" r="21"/>
-        <circle cx="32" cy="32" r="28"/>
-      </g>
-      <path d="M16 12 H48 V21 H37 V50 H27 V21 H16 Z" fill="black"/>
-    </mask>
-    <clipPath id="frame"><rect width="1280" height="320" rx="0"/></clipPath>
+    <clipPath id="frame"><rect width="1280" height="320"/></clipPath>
   </defs>
 
   <g clip-path="url(#frame)">
@@ -28,8 +18,9 @@
       <circle cx="1110" cy="160" r="270"/>
     </g>
 
-    <g transform="translate(104 108) scale(1.62)">
-      <rect width="64" height="64" fill="#FFFFFF" mask="url(#mk)"/>
+    <g transform="translate(104 96) scale(1.75)">
+      <circle cx="32" cy="32" r="24" fill="#FFFFFF"/>
+      <path d="M32 16 L40 28 L32 48 L24 28 Z" fill="#0E7C7B"/>
     </g>
 
     <text x="248" y="158" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"

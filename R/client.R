@@ -6,14 +6,16 @@
 )
 
 .tl_environment_url <- function(name) {
-  url <- .tl_environments[[tolower(name)]]
-  if (is.null(url)) {
+  key <- tolower(name)
+  # `[[` on a named character vector throws "subscript out of bounds" for an
+  # unknown name, so check membership explicitly before indexing.
+  if (!key %in% names(.tl_environments)) {
     stop(topolab_error(
       sprintf("Unknown environment '%s'. Use one of %s.",
               name, paste(names(.tl_environments), collapse = ", ")),
       class = "topolab_configuration_error"))
   }
-  url
+  unname(.tl_environments[[key]])
 }
 
 # Resolve the API base URL. Precedence (most specific first):

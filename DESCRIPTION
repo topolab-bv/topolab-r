@@ -1,0 +1,14 @@
+Package: topolab
+Type: Package
+Title: Client for the Topolab Dataset and Geospatial API
+Version: 0.1.0
+Authors@R: person("Topolab B.V.", role = c("aut", "cre"), email = "support@topolab.nl")
+Description: Reads Topolab datasets and OGC API - Features collections into
+    R, returning GeoJSON and optionally 'sf' objects for spatial analysis.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Imports: httr2 (>= 1.0.0), jsonlite
+Suggests: sf, testthat (>= 3.0.0), httptest2, withr
+Config/testthat/edition: 3
+RoxygenNote: 7.3.1
+URL: https://docs.topolab.nl

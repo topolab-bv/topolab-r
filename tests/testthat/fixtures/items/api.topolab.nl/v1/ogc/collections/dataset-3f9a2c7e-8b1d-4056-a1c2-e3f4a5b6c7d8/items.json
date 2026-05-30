@@ -1,0 +1,4 @@
+{"type":"FeatureCollection","numberReturned":2,"numberMatched":2,"features":[
+  {"type":"Feature","id":"1","geometry":{"type":"Point","coordinates":[4.9041,52.3676]},"properties":{"name":"Domino's Amsterdam Centrum","city":"Amsterdam"}},
+  {"type":"Feature","id":"2","geometry":{"type":"Point","coordinates":[4.8952,52.3702]},"properties":{"name":"Domino's Amsterdam Zuid","city":"Amsterdam"}}
+]}

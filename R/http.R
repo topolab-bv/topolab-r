@@ -11,8 +11,10 @@ tl_req <- function(client, path, query = list()) {
   req <- httr2::req_user_agent(req, .tl_user_agent())
   req <- httr2::req_timeout(req, client$timeout)
   req <- httr2::req_retry(
+    # httr2's max_tries is the TOTAL attempt count; max_retries is the number of
+    # *retries* after the first try, matching the Python/TS SDKs (default 3).
     req,
-    max_tries = client$max_retries,
+    max_tries = client$max_retries + 1L,
     is_transient = function(resp) httr2::resp_status(resp) %in% c(429, 500, 502, 503, 504),
     after = function(resp) {
       body <- tryCatch(httr2::resp_body_json(resp), error = function(e) list())

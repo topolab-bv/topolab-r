@@ -57,18 +57,31 @@ tl_geojson <- function(dataset) {
 #' @export
 tl_download <- function(dataset, path, format = "geojson") {
   req <- tl_req(dataset$client, paste0("v1/dataset/", dataset$slug, "/files/", format))
-  resp <- httr2::req_perform(req, path = path)
+  # Stream to a temp file so an error response is never written to `path`, and a
+  # partial download (connection dropped mid-body) cannot leave a truncated file
+  # at the destination. Status is checked before the atomic rename.
+  tmp <- tempfile(tmpdir = dirname(path), fileext = ".part")
+  on.exit(if (file.exists(tmp)) unlink(tmp), add = TRUE)
+  resp <- httr2::req_perform(req, path = tmp)
   if (httr2::resp_status(resp) >= 400) abort_from_response(resp)
+  if (!file.rename(tmp, path)) {
+    file.copy(tmp, path, overwrite = TRUE)
+  }
   invisible(path)
 }
 
+# Resolve the dataset slug to its OGC collection id (`dataset-{uuid}`), caching
+# the result on the handle's environment so repeat spatial calls skip the extra
+# metadata request. The handle carries an environment precisely so this write is
+# visible to the caller (R lists are copy-on-modify; environments are by-reference).
 .tl_collection_id <- function(dataset) {
-  if (is.null(dataset$collection_id)) {
-    md <- tl_metadata(dataset)
-    paste0("dataset-", md$id)
-  } else {
-    dataset$collection_id
+  cached <- dataset$cache$collection_id
+  if (!is.null(cached)) {
+    return(cached)
   }
+  cid <- paste0("dataset-", tl_metadata(dataset)$id)
+  dataset$cache$collection_id <- cid
+  cid
 }
 
 #' Query features (OGC items; requires GIS_ACCESS)

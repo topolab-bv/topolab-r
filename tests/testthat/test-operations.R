@@ -21,6 +21,51 @@ test_that("tl_items resolves slug to collection id and returns a FeatureCollecti
   })
 })
 
+test_that("tl_items caches the slug->collection id (one metadata fetch per handle)", {
+  cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl")
+  meta_calls <- 0L
+  httr2::local_mocked_responses(function(req) {
+    path <- httr2::url_parse(req$url)$path
+    if (grepl("/v1/ogc/collections/", path, fixed = TRUE)) {
+      return(httr2::response(200, headers = list(`Content-Type` = "application/json"),
+                             body = charToRaw(fixture("items.json"))))
+    }
+    meta_calls <<- meta_calls + 1L
+    httr2::response(200, headers = list(`Content-Type` = "application/json"),
+                    body = charToRaw(fixture("metadata.json")))
+  })
+  ds <- tl_dataset(cl, "nl-domino-poi")
+  tl_items(ds, limit = 100)
+  tl_items(ds, limit = 10)
+  expect_equal(meta_calls, 1L) # resolved once, then cached on the handle
+})
+
+test_that("tl_items_all concatenates pages and honours total_limit", {
+  cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl")
+  page <- jsonlite::fromJSON(fixture("items.json"), simplifyVector = FALSE)
+  calls <- 0L
+  httr2::local_mocked_responses(function(req) {
+    path <- httr2::url_parse(req$url)$path
+    if (grepl("/v1/dataset/", path, fixed = TRUE)) {
+      return(httr2::response(200, headers = list(`Content-Type` = "application/json"),
+                             body = charToRaw(fixture("metadata.json"))))
+    }
+    calls <<- calls + 1L
+    body <- if (calls <= 2) {
+      jsonlite::toJSON(page, auto_unbox = TRUE)
+    } else {
+      '{"type":"FeatureCollection","features":[]}'
+    }
+    httr2::response(200, headers = list(`Content-Type` = "application/json"),
+                    body = charToRaw(body))
+  })
+  all <- tl_items_all(tl_dataset(cl, "nl-domino-poi"), page_size = 2)
+  expect_equal(length(all$features), 4) # 2 pages x 2 features, then empty page
+
+  capped <- tl_items_all(tl_dataset(cl, "nl-domino-poi"), page_size = 2, total_limit = 3)
+  expect_equal(length(capped$features), 3)
+})
+
 test_that("tl_geojson returns a parsed FeatureCollection", {
   cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl")
   with_mocks(list("/files/geojson" = "full.geojson"), {

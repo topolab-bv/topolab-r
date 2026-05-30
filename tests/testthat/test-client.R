@@ -11,7 +11,7 @@ test_that("tl_client errors without a key", {
 
 test_that("tl_metadata returns parsed fields", {
   cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl")
-  httptest2::with_mock_dir(test_path("fixtures/metadata"), {
+  with_mocks(list("/v1/dataset/nl-domino-poi" = "metadata.json"), {
     md <- tl_metadata(tl_dataset(cl, "nl-domino-poi"))
     expect_equal(md$table, "nl-domino-poi")
     expect_true(nzchar(md$id))

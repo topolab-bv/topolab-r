@@ -8,7 +8,6 @@ Description: Reads Topolab datasets and OGC API - Features collections into
 License: MIT + file LICENSE
 Encoding: UTF-8
 Imports: httr2 (>= 1.0.0), jsonlite
-Suggests: sf, testthat (>= 3.0.0), httptest2, withr
+Suggests: sf, testthat (>= 3.0.0), withr
 Config/testthat/edition: 3
-URL: https://docs.topolab.nl
 Config/roxygen2/version: 8.0.0

@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="topolab — the R client for the Topolab geospatial data API" width="100%">
+  <img src="assets/topolab-logo.png" alt="Topolab" width="320">
 </p>
 
 <p align="center">
-  <a href="https://cran.r-project.org/package=topolab"><img src="https://img.shields.io/cran/v/topolab?color=0E7C7B&label=CRAN" alt="CRAN version"></a>
+  <a href="https://cran.r-project.org/package=topolab"><img src="https://img.shields.io/cran/v/topolab?color=1E3A8A&label=CRAN" alt="CRAN version"></a>
   <a href="https://github.com/topolab/topolab-r/actions/workflows/R-CMD-check.yml"><img src="https://img.shields.io/github/actions/workflow/status/topolab/topolab-r/R-CMD-check.yml?branch=main&label=R-CMD-check" alt="R-CMD-check"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT"></a>
-  <a href="https://docs.topolab.nl"><img src="https://img.shields.io/badge/docs-topolab.nl-0E7C7B" alt="Documentation"></a>
+  <a href="https://docs.topolab.nl"><img src="https://img.shields.io/badge/docs-topolab.nl-1E3A8A" alt="Documentation"></a>
 </p>
 
 <h1 align="center">topolab</h1>

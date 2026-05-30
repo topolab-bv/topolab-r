@@ -3,6 +3,8 @@
 ^\.github$
 ^LICENSE\.md$
 ^assets$
+^docs$
+^mkdocs\.yml$
 ^CONTRIBUTING\.md$
 ^README\.md$
 ^.*\.tar\.gz$

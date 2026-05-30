@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://cran.r-project.org/package=topolab"><img src="https://img.shields.io/cran/v/topolab?color=1E3A8A&label=CRAN" alt="CRAN version"></a>
-  <a href="https://github.com/topolab/topolab-r/actions/workflows/R-CMD-check.yml"><img src="https://img.shields.io/github/actions/workflow/status/topolab/topolab-r/R-CMD-check.yml?branch=main&label=R-CMD-check" alt="R-CMD-check"></a>
+  <a href="https://github.com/topolab-bv/topolab-r/actions/workflows/R-CMD-check.yml"><img src="https://img.shields.io/github/actions/workflow/status/topolab-bv/topolab-r/R-CMD-check.yml?branch=main&label=R-CMD-check" alt="R-CMD-check"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT"></a>
   <a href="https://docs.topolab.nl"><img src="https://img.shields.io/badge/docs-topolab.nl-1E3A8A" alt="Documentation"></a>
 </p>

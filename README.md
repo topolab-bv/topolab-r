@@ -47,6 +47,19 @@ Read it from the environment rather than committing it to a script:
 tl <- tl_client(api_key = Sys.getenv("TOPOLAB_API_KEY"))
 ```
 
+## Staging vs production
+
+The client targets **production** (`https://api.topolab.nl`) by default. Point it
+at staging with the `environment` argument:
+
+```r
+tl <- tl_client(api_key = "tlb_staging_...", environment = "staging") # https://api-staging.topolab.nl
+```
+
+Or set `TOPOLAB_ENV=staging`. An explicit `base_url=` always wins (self-hosting /
+tests). Precedence: `base_url` → `environment` → `TOPOLAB_BASE_URL` →
+`TOPOLAB_ENV` → production.
+
 ## What you can do
 
 ```r

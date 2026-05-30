@@ -5,9 +5,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: { path: topolab-r }
+        with:
+          path: topolab-r
       - uses: actions/checkout@v4
-        with: { repository: topolab-bv/topolab-sdk-spec, path: topolab-sdk-spec }
+        with:
+          repository: topolab-bv/topolab-sdk-spec
+          path: topolab-sdk-spec
       - uses: r-lib/actions/setup-r@v2
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:

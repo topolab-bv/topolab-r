@@ -6,7 +6,8 @@
 \usage{
 tl_client(
   api_key = Sys.getenv("TOPOLAB_API_KEY"),
-  base_url = Sys.getenv("TOPOLAB_BASE_URL", unset = "https://api.topolab.nl"),
+  base_url = NULL,
+  environment = NULL,
   timeout = 60,
   max_retries = 3
 )
@@ -14,7 +15,10 @@ tl_client(
 \arguments{
 \item{api_key}{Organization-scoped API key. Defaults to env var TOPOLAB_API_KEY.}
 
-\item{base_url}{API base URL. Defaults to https://api.topolab.nl}
+\item{base_url}{Explicit API base URL (overrides `environment`). For self-hosting
+or testing; defaults to the production environment.}
+
+\item{environment}{Named environment: "production" (default) or "staging".}
 
 \item{timeout}{Request timeout (seconds).}
 

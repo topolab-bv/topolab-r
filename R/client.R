@@ -89,9 +89,6 @@ tl_client <- function(api_key = Sys.getenv("TOPOLAB_API_KEY"),
 #' @return A `topolab_dataset` handle.
 #' @export
 tl_dataset <- function(client, slug) {
-  # `cache` is an environment (by-reference) so the resolved OGC collection id
-  # persists across calls on the same handle — a plain list field would be lost
-  # to R's copy-on-modify semantics.
-  structure(list(client = client, slug = slug, cache = new.env(parent = emptyenv())),
+  structure(list(client = client, slug = slug),
             class = "topolab_dataset")
 }

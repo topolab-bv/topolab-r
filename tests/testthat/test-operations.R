@@ -40,28 +40,39 @@ test_that("tl_items caches the slug->collection id (one metadata fetch per handl
   expect_equal(meta_calls, 1L) # resolved once, then cached on the handle
 })
 
-test_that("tl_items_all concatenates pages and honours total_limit", {
-  cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl")
-  page <- jsonlite::fromJSON(fixture("items.json"), simplifyVector = FALSE)
+# Two full pages of `page_size` then an empty page; fresh counter per test so the
+# two scenarios don't share mock state.
+.paginating_mock <- function(page, full_pages = 2) {
   calls <- 0L
-  httr2::local_mocked_responses(function(req) {
+  function(req) {
     path <- httr2::url_parse(req$url)$path
     if (grepl("/v1/dataset/", path, fixed = TRUE)) {
       return(httr2::response(200, headers = list(`Content-Type` = "application/json"),
                              body = charToRaw(fixture("metadata.json"))))
     }
     calls <<- calls + 1L
-    body <- if (calls <= 2) {
+    body <- if (calls <= full_pages) {
       jsonlite::toJSON(page, auto_unbox = TRUE)
     } else {
       '{"type":"FeatureCollection","features":[]}'
     }
     httr2::response(200, headers = list(`Content-Type` = "application/json"),
                     body = charToRaw(body))
-  })
-  all <- tl_items_all(tl_dataset(cl, "nl-domino-poi"), page_size = 2)
-  expect_equal(length(all$features), 4) # 2 pages x 2 features, then empty page
+  }
+}
 
+test_that("tl_items_all concatenates pages until an empty page", {
+  cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl")
+  page <- jsonlite::fromJSON(fixture("items.json"), simplifyVector = FALSE)
+  httr2::local_mocked_responses(.paginating_mock(page))
+  all <- tl_items_all(tl_dataset(cl, "nl-domino-poi"), page_size = 2)
+  expect_equal(length(all$features), 4) # 2 pages x 2 features
+})
+
+test_that("tl_items_all honours total_limit", {
+  cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl")
+  page <- jsonlite::fromJSON(fixture("items.json"), simplifyVector = FALSE)
+  httr2::local_mocked_responses(.paginating_mock(page))
   capped <- tl_items_all(tl_dataset(cl, "nl-domino-poi"), page_size = 2, total_limit = 3)
   expect_equal(length(capped$features), 3)
 })

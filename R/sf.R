@@ -1,14 +1,30 @@
-#' Read a dataset (or feature collection) as an sf object
+#' Read Topolab data as an sf object
+#'
+#' Materializes features as an `sf` object with geometry in WGS84 (EPSG:4326).
+#' Dispatches on a `topolab_dataset` handle (which is downloaded first) or a
+#' parsed GeoJSON feature-collection list.
 #'
 #' @param x A `topolab_dataset` or a parsed GeoJSON feature collection list.
+#' @param ... Unused; present for S3 method consistency.
 #' @return An `sf` object with geometry in WGS84 (EPSG:4326).
 #' @export
-as_sf <- function(x) {
+as_sf <- function(x, ...) {
+  UseMethod("as_sf")
+}
+
+#' @rdname as_sf
+#' @export
+as_sf.topolab_dataset <- function(x, ...) {
+  as_sf(tl_geojson(x), ...)
+}
+
+#' @rdname as_sf
+#' @export
+as_sf.default <- function(x, ...) {
   if (!requireNamespace("sf", quietly = TRUE)) {
     stop(topolab_error(
       "as_sf() requires the 'sf' package. Install it with install.packages('sf').",
       class = "topolab_configuration_error"))
   }
-  fc <- if (inherits(x, "topolab_dataset")) tl_geojson(x) else x
-  sf::read_sf(jsonlite::toJSON(fc, auto_unbox = TRUE, null = "null"))
+  sf::read_sf(jsonlite::toJSON(x, auto_unbox = TRUE, null = "null"))
 }

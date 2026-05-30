@@ -7,13 +7,9 @@ test_that("tl_datasets lists catalog", {
   })
 })
 
-test_that("tl_items resolves slug to collection id and returns a FeatureCollection", {
+test_that("tl_items addresses the collection by slug and returns a FeatureCollection", {
   cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl")
-  # metadata lookup (slug -> uuid) then the OGC items call; route by path order
-  with_mocks(list(
-    "/v1/ogc/collections/" = "items.json",
-    "/v1/dataset/nl-domino-poi" = "metadata.json"
-  ), {
+  with_mocks(list("/v1/ogc/collections/" = "items.json"), {
     ds <- tl_dataset(cl, "nl-domino-poi")
     fc <- tl_items(ds, bbox = c(4.7, 52.2, 5.1, 52.5), limit = 100)
     expect_equal(fc$type, "FeatureCollection")
@@ -21,12 +17,14 @@ test_that("tl_items resolves slug to collection id and returns a FeatureCollecti
   })
 })
 
-test_that("tl_items caches the slug->collection id (one metadata fetch per handle)", {
+test_that("tl_items is slug-direct (no metadata round-trip)", {
   cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl")
   meta_calls <- 0L
+  item_path <- NA_character_
   httr2::local_mocked_responses(function(req) {
     path <- httr2::url_parse(req$url)$path
     if (grepl("/v1/ogc/collections/", path, fixed = TRUE)) {
+      item_path <<- path
       return(httr2::response(200, headers = list(`Content-Type` = "application/json"),
                              body = charToRaw(fixture("items.json"))))
     }
@@ -37,25 +35,27 @@ test_that("tl_items caches the slug->collection id (one metadata fetch per handl
   ds <- tl_dataset(cl, "nl-domino-poi")
   tl_items(ds, limit = 100)
   tl_items(ds, limit = 10)
-  expect_equal(meta_calls, 1L) # resolved once, then cached on the handle
+  expect_equal(meta_calls, 0L) # collectionId IS the slug — no metadata round-trip
+  expect_true(grepl("/v1/ogc/collections/nl-domino-poi/items", item_path, fixed = TRUE))
 })
 
-# Two full pages of `page_size` then an empty page; fresh counter per test so the
-# two scenarios don't share mock state.
+# Offset-aware items mock that reports a consistent `numberMatched`
+# (= full_pages * features-per-page). The parallel pager is driven by
+# numberMatched, and the sequential pager stops on the empty page, so both see
+# the same total. `page` is the parsed items.json fixture (one page of features).
 .paginating_mock <- function(page, full_pages = 2) {
-  calls <- 0L
+  per <- length(page$features)
+  total <- per * full_pages
+  page$numberMatched <- total
+  empty <- list(type = "FeatureCollection", numberMatched = total, features = list())
   function(req) {
     path <- httr2::url_parse(req$url)$path
     if (grepl("/v1/dataset/", path, fixed = TRUE)) {
       return(httr2::response(200, headers = list(`Content-Type` = "application/json"),
                              body = charToRaw(fixture("metadata.json"))))
     }
-    calls <<- calls + 1L
-    body <- if (calls <= full_pages) {
-      jsonlite::toJSON(page, auto_unbox = TRUE)
-    } else {
-      '{"type":"FeatureCollection","features":[]}'
-    }
+    offset <- as.integer(httr2::url_parse(req$url)$query$offset %||% "0")
+    body <- jsonlite::toJSON(if (offset < total) page else empty, auto_unbox = TRUE)
     httr2::response(200, headers = list(`Content-Type` = "application/json"),
                     body = charToRaw(body))
   }
@@ -75,6 +75,23 @@ test_that("tl_items_all honours total_limit", {
   httr2::local_mocked_responses(.paginating_mock(page))
   capped <- tl_items_all(tl_dataset(cl, "nl-domino-poi"), page_size = 2, total_limit = 3)
   expect_equal(length(capped$features), 3)
+})
+
+test_that("tl_items_all fetches remaining pages in parallel (driven by numberMatched)", {
+  cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl")
+  page <- jsonlite::fromJSON(fixture("items.json"), simplifyVector = FALSE) # numberMatched=4, 2 feats
+  httr2::local_mocked_responses(.paginating_mock(page))
+  # page_size 2, numberMatched 4 => 1 first page + 1 parallel page = 4 features.
+  all <- tl_items_all(tl_dataset(cl, "nl-domino-poi"), page_size = 2, parallel = TRUE)
+  expect_equal(length(all$features), 4)
+})
+
+test_that("tl_items_all parallel = FALSE pages sequentially to the same result", {
+  cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl")
+  page <- jsonlite::fromJSON(fixture("items.json"), simplifyVector = FALSE)
+  httr2::local_mocked_responses(.paginating_mock(page))
+  all <- tl_items_all(tl_dataset(cl, "nl-domino-poi"), page_size = 2, parallel = FALSE)
+  expect_equal(length(all$features), 4)
 })
 
 test_that("tl_geojson returns a parsed FeatureCollection", {

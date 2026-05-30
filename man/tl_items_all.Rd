@@ -11,7 +11,9 @@ tl_items_all(
   bbox = NULL,
   category = NULL,
   city = NULL,
-  country = NULL
+  country = NULL,
+  parallel = TRUE,
+  max_concurrency = 6
 )
 }
 \arguments{
@@ -22,10 +24,18 @@ tl_items_all(
 \item{total_limit}{Max features overall (NULL = all).}
 
 \item{bbox, category, city, country}{Filters.}
+
+\item{parallel}{Fetch the remaining pages concurrently (default TRUE).}
+
+\item{max_concurrency}{Max simultaneous in-flight requests when `parallel`.}
 }
 \value{
 A GeoJSON FeatureCollection (list) with all matched features.
 }
 \description{
-Auto-paginate all features
+Fetches every matching feature, paging transparently. When more than one page
+is needed the remaining pages are fetched **concurrently** via
+[httr2::req_perform_parallel()] (the server reports `numberMatched` on the
+first page, so the full set of page offsets is known after one request). Set
+`parallel = FALSE` to page strictly sequentially.
 }

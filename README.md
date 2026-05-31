@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/topolab-logo.png" alt="Topolab" width="320">
+  <img src="assets/banner.png" alt="Topolab R" width="100%">
 </p>
 
 <p align="center">

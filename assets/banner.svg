@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" width="1200" height="300" role="img" aria-label="Topolab">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1D4ED8"/>
+      <stop offset="55%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#6366F1"/>
+    </linearGradient>
+    <radialGradient id="dots" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0.9"/>
+      <stop offset="60%" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="dotgrid" width="18" height="18" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.1" fill="#fff" fill-opacity="0.18"/>
+    </pattern>
+    <clipPath id="frame"><rect x="0" y="0" width="1200" height="300" rx="0"/></clipPath>
+  </defs>
+  <g clip-path="url(#frame)">
+    <rect width="1200" height="300" fill="url(#bg)"/>
+    <!-- topo-lines: concentric contour rings @ 30%/40%, 12% white -->
+    <g opacity="0.12">
+      <circle cx="360.0" cy="120.0" r="19" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="38" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="57" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="76" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="95" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="114" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="133" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="152" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="171" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="190" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="209" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="228" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="247" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="266" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="285" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="304" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="323" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="342" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="361" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="380" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="399" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="418" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="437" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="456" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="475" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="494" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="513" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="532" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="551" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="570" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="589" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="608" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="627" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="646" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="665" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="684" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="703" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="722" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="741" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="760" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="779" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="798" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="817" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="836" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="855" fill="none" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="360.0" cy="120.0" r="874" fill="none" stroke="#fff" stroke-width="1.5"/>
+    </g>
+    <!-- dot grid wash on the right third -->
+    <rect x="744.0" y="0" width="456.0" height="300" fill="url(#dotgrid)"/>
+    <!-- hex-cube mark + wordmark + tagline -->
+    <g transform="translate(96,110) scale(2.5)">
+      <path d="M14 0 L28 8 L28 24 L14 32 L0 24 L0 8 Z" fill="#fff"/>
+      <path d="M14 7 L23 12 L14 17 L5 12 Z" fill="#1E3A8A"/>
+      <path d="M5 16 L14 21 L23 16" stroke="#1E3A8A" stroke-width="1.3" fill="none"/>
+      <path d="M5 20 L14 25 L23 20" stroke="#1E3A8A" stroke-width="1.3" fill="none"/>
+    </g>
+    <text x="194.0" y="138" font-family="Fraunces, Georgia, serif" font-weight="600" font-size="84" letter-spacing="-1.2" fill="#fff">Topolab</text>
+    <text x="197.0" y="188" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-weight="500" font-size="27" letter-spacing="0.2" fill="#fff" fill-opacity="0.92">R client for the Topolab geospatial API</text>
+  </g>
+</svg>

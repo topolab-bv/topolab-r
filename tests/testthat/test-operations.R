@@ -103,6 +103,20 @@ test_that("tl_geojson returns a parsed FeatureCollection", {
   })
 })
 
+test_that("tl_download rejects an unsupported format without a round trip", {
+  cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl")
+  calls <- 0L
+  httr2::local_mocked_responses(function(req) {
+    calls <<- calls + 1L
+    httr2::response(200, headers = list(`Content-Type` = "application/geo+json"),
+                    body = charToRaw("{}"))
+  })
+  path <- withr::local_tempfile(fileext = ".gpkg")
+  expect_error(tl_download(tl_dataset(cl, "nl-domino-poi"), path, format = "gpkg"),
+               class = "topolab_validation_error")
+  expect_equal(calls, 0L)
+})
+
 test_that("as_sf converts to sf when available", {
   skip_if_not_installed("sf")
   cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl")
@@ -112,17 +126,63 @@ test_that("as_sf converts to sf when available", {
   })
 })
 
-test_that("addon-required errors surface as a typed condition", {
+# The engine's error envelope is {code, message, path, method, time, requestId} —
+# there is no `statusCode` field, so the mapping branches on the HTTP status.
+.error_mock <- function(status, message, headers = list(), request_id = "req-1") {
+  function(req) {
+    body <- jsonlite::toJSON(
+      list(code = status, message = message, path = "/v1/dataset/x", method = "GET",
+           time = "2026-09-08T23:42:15.819Z", requestId = request_id),
+      auto_unbox = TRUE)
+    httr2::response(status_code = status,
+                    headers = c(list(`Content-Type` = "application/json"), headers),
+                    body = charToRaw(body))
+  }
+}
+
+test_that("addon-required errors surface as a typed condition (endpoint phrasing)", {
   cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl", max_retries = 1)
-  httr2::local_mocked_responses(function(req) {
-    httr2::response(
-      status_code = 403,
-      headers = list(`Content-Type` = "application/json"),
-      body = charToRaw('{"statusCode":403,"message":"This endpoint requires the API_ACCESS add-on"}')
-    )
-  })
-  ds <- tl_dataset(cl, "nl-domino-poi")
-  err <- tryCatch(tl_geojson(ds), topolab_addon_required_error = function(e) e)
+  httr2::local_mocked_responses(
+    .error_mock(403, "This endpoint requires the api-access add-on"))
+  err <- tryCatch(tl_geojson(tl_dataset(cl, "nl-domino-poi")),
+                  topolab_addon_required_error = function(e) e)
   expect_s3_class(err, "topolab_addon_required_error")
-  expect_equal(err$addon, "API_ACCESS")
+  expect_equal(err$addon, "api-access")   # hyphenated slug survives the capture
+  expect_equal(err$status, 403)
+})
+
+test_that("addon-required errors surface as a typed condition (archive phrasing)", {
+  cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl", max_retries = 1)
+  httr2::local_mocked_responses(.error_mock(
+    403,
+    "Archive access requires the Archived Data add-on. Please upgrade to access historical data."))
+  err <- tryCatch(tl_archives(tl_dataset(cl, "nl-domino-poi")),
+                  topolab_addon_required_error = function(e) e)
+  expect_s3_class(err, "topolab_addon_required_error")
+  expect_equal(err$addon, "archived-data")   # spaced, title-cased name normalises
+})
+
+test_that("a 403 without an add-on message is an access denial", {
+  cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl", max_retries = 1)
+  httr2::local_mocked_responses(
+    .error_mock(403, "Your organization does not have access to this dataset"))
+  err <- tryCatch(tl_geojson(tl_dataset(cl, "nl-domino-poi")),
+                  topolab_access_denied_error = function(e) e)
+  expect_s3_class(err, "topolab_access_denied_error")
+  expect_null(err$addon)
+})
+
+test_that("the request id comes from the header, falling back to the body", {
+  cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl", max_retries = 1)
+  httr2::local_mocked_responses(.error_mock(
+    404, "Archive file not found for 2026-13 in csv format",
+    headers = list(`X-Request-Id` = "from-header"), request_id = "from-body"))
+  err <- tryCatch(tl_metadata(tl_dataset(cl, "nl-domino-poi")),
+                  topolab_not_found_error = function(e) e)
+  expect_equal(err$request_id, "from-header")
+
+  httr2::local_mocked_responses(.error_mock(404, "not found", request_id = "from-body"))
+  err <- tryCatch(tl_metadata(tl_dataset(cl, "nl-domino-poi")),
+                  topolab_not_found_error = function(e) e)
+  expect_equal(err$request_id, "from-body")
 })

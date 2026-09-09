@@ -17,5 +17,7 @@ tl_download(dataset, path, format = "geojson")
 The path, invisibly.
 }
 \description{
-Download a dataset export to disk
+An unsupported `format` is rejected client-side as a
+`topolab_validation_error` rather than sent, matching the other Topolab SDKs
+and the server's 400.
 }

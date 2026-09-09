@@ -21,7 +21,7 @@ mock_router <- function(routes) {
     }
     httr2::response(status_code = 404,
                     headers = list(`Content-Type` = "application/json"),
-                    body = charToRaw('{"statusCode":404,"message":"no mock"}'))
+                    body = charToRaw('{"code":404,"message":"no mock"}'))
   }
 }
 

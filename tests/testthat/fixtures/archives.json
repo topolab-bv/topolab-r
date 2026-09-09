@@ -1,0 +1,123 @@
+[
+  {
+    "month": "2026-07",
+    "formats": [
+      "csv",
+      "geojson",
+      "json",
+      "kml",
+      "shp"
+    ],
+    "archiveDate": "2026-07-01"
+  },
+  {
+    "month": "2026-06",
+    "formats": [
+      "csv",
+      "geojson",
+      "json",
+      "kml",
+      "shp"
+    ],
+    "archiveDate": "2026-06-01"
+  },
+  {
+    "month": "2026-05",
+    "formats": [
+      "csv",
+      "geojson",
+      "json",
+      "kml",
+      "shp"
+    ],
+    "archiveDate": "2026-05-01"
+  },
+  {
+    "month": "2026-04",
+    "formats": [
+      "csv",
+      "geojson",
+      "json",
+      "kml",
+      "shp"
+    ],
+    "archiveDate": "2026-04-01"
+  },
+  {
+    "month": "2026-03",
+    "formats": [
+      "csv",
+      "geojson",
+      "json",
+      "kml",
+      "shp"
+    ],
+    "archiveDate": "2026-03-01"
+  },
+  {
+    "month": "2026-02",
+    "formats": [
+      "csv",
+      "geojson",
+      "json",
+      "kml",
+      "shp"
+    ],
+    "archiveDate": "2026-02-01"
+  },
+  {
+    "month": "2026-01",
+    "formats": [
+      "csv",
+      "geojson",
+      "json",
+      "kml",
+      "shp"
+    ],
+    "archiveDate": "2026-01-01"
+  },
+  {
+    "month": "2025-12",
+    "formats": [
+      "csv",
+      "geojson",
+      "json",
+      "kml",
+      "shp"
+    ],
+    "archiveDate": "2025-12-01"
+  },
+  {
+    "month": "2025-11",
+    "formats": [
+      "csv",
+      "geojson",
+      "json",
+      "kml",
+      "shp"
+    ],
+    "archiveDate": "2025-11-01"
+  },
+  {
+    "month": "2025-10",
+    "formats": [
+      "csv",
+      "geojson",
+      "json",
+      "kml",
+      "shp"
+    ],
+    "archiveDate": "2025-10-01"
+  },
+  {
+    "month": "2025-09",
+    "formats": [
+      "csv",
+      "geojson",
+      "json",
+      "kml",
+      "shp"
+    ],
+    "archiveDate": "2025-09-01"
+  }
+]

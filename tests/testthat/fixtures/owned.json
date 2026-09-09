@@ -1,0 +1,45 @@
+{
+  "items": [
+    {
+      "table": "business_professional_services_autocrew",
+      "name": "Dutch Automotive Services - AutoCrew",
+      "recordCount": 119,
+      "latestArchiveMonth": "2026-07",
+      "latestArchiveFormats": [
+        "csv",
+        "geojson",
+        "json",
+        "kml",
+        "shp"
+      ],
+      "archiveMonthsAvailable": 11,
+      "links": {
+        "current": "https://api.topolab.nl/v1/dataset/business_professional_services_autocrew/files/{format}",
+        "archives": "https://api.topolab.nl/v1/dataset/business_professional_services_autocrew/archives/list",
+        "latestArchive": "https://api.topolab.nl/v1/dataset/business_professional_services_autocrew/archives/latest/{format}"
+      }
+    },
+    {
+      "table": "business_professional_services_autotaalglas",
+      "name": "Dutch Automotive Services - Autotaalglas",
+      "recordCount": 54,
+      "latestArchiveMonth": "2026-07",
+      "latestArchiveFormats": [
+        "csv",
+        "geojson",
+        "json",
+        "kml",
+        "shp"
+      ],
+      "archiveMonthsAvailable": 11,
+      "links": {
+        "current": "https://api.topolab.nl/v1/dataset/business_professional_services_autotaalglas/files/{format}",
+        "archives": "https://api.topolab.nl/v1/dataset/business_professional_services_autotaalglas/archives/list",
+        "latestArchive": "https://api.topolab.nl/v1/dataset/business_professional_services_autotaalglas/archives/latest/{format}"
+      }
+    }
+  ],
+  "total": 193,
+  "limit": 2,
+  "offset": 0
+}

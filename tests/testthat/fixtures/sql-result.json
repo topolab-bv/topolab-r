@@ -1,0 +1,22 @@
+{
+  "columns": [
+    "city",
+    "n"
+  ],
+  "rows": [
+    {
+      "city": "Amsterdam",
+      "n": 412
+    },
+    {
+      "city": "Rotterdam",
+      "n": 233
+    }
+  ],
+  "rowCount": 2,
+  "truncated": false,
+  "elapsedMs": 41.7,
+  "datasets": [
+    "business_professional_services_autocrew"
+  ]
+}

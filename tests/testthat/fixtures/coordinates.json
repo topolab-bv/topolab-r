@@ -1,0 +1,80 @@
+[
+  {
+    "id": "02be5c77-fe43-44ca-878a-48cddddde98c",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        3.655321,
+        51.496386
+      ]
+    },
+    "latitude": "51.49638600",
+    "longitude": "3.65532100",
+    "metadata": {
+      "city": "Middelburg",
+      "tags": [],
+      "unit": null,
+      "email": null,
+      "hours": null,
+      "phone": null,
+      "street": "Amp\u00e8reweg",
+      "modules": null,
+      "website": null,
+      "category": "business_professional_services",
+      "geo_type": "POINT",
+      "location": "AutoCrew",
+      "services": [],
+      "postal_code": "4338 PT",
+      "country_code": "NL",
+      "harvest_date": "1782518400",
+      "sub_category": "automotive_service",
+      "admin_level_1": null,
+      "admin_level_2": null,
+      "admin_level_3": null,
+      "category_path": [],
+      "location_name": null,
+      "location_type": null,
+      "street_number": "26",
+      "street_number_ext": "R"
+    }
+  },
+  {
+    "id": "04f8b4ba-fee3-41a4-8734-1ead750b5ba6",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        5.815504,
+        53.193418
+      ]
+    },
+    "latitude": "53.19341800",
+    "longitude": "5.81550400",
+    "metadata": {
+      "city": "Leeuwarden",
+      "tags": [],
+      "unit": null,
+      "email": null,
+      "hours": null,
+      "phone": null,
+      "street": "Drachtsterweg",
+      "modules": null,
+      "website": null,
+      "category": "business_professional_services",
+      "geo_type": "POINT",
+      "location": "AutoCrew",
+      "services": [],
+      "postal_code": "8934 BV",
+      "country_code": "NL",
+      "harvest_date": "1782518400",
+      "sub_category": "automotive_service",
+      "admin_level_1": null,
+      "admin_level_2": null,
+      "admin_level_3": null,
+      "category_path": [],
+      "location_name": null,
+      "location_type": null,
+      "street_number": "8",
+      "street_number_ext": null
+    }
+  }
+]

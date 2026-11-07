@@ -8,7 +8,7 @@ inherits from `topolab_error`.
 | `topolab_authentication_error` | missing or invalid API key (401) |
 | `topolab_insufficient_credits_error` | not enough credits — `$required` / `$available` (402) |
 | `topolab_addon_required_error` | key lacks the add-on — `$addon` names it (403) |
-| `topolab_access_denied_error` | dataset not accessible to your organization (403) |
+| `topolab_access_denied_error` | dataset not accessible to your organization, or the monthly spending limit is reached (`$code == "SPENDING_LIMIT_EXCEEDED"`) (403) |
 | `topolab_not_found_error` | unknown dataset, collection, or archive month (404) |
 | `topolab_query_timeout_error` | SQL query exceeded the server statement timeout (408) |
 | `topolab_rate_limit_error` | rate limited — `$retry_after`, retried automatically (429) |
@@ -38,17 +38,80 @@ filter:
   "time": "2026-09-08T23:42:15.819Z", "requestId": "25c2a6a1…" }
 ```
 
-There is **no `statusCode` field** — `code` merely mirrors the HTTP status, so
-the package maps conditions from the **HTTP status** and never from a body
-field. Each condition carries:
+```json
+{ "code": "SPENDING_LIMIT_EXCEEDED",
+  "message": "Organization monthly spending limit exceeded",
+  "details": { "limit": 5000, "consumed": 4995, "remaining": 5,
+               "periodEnd": "2026-11-30T23:59:59.999Z" },
+  "path": "/v1/dataset/{table}/files/geojson", "method": "GET",
+  "time": "2026-11-07T11:52:28.000Z", "requestId": "8f0c41d2…" }
+```
 
-| Field | Meaning |
-|---|---|
-| `$status` | HTTP status code |
-| `$message` | Server message |
-| `$request_id` | `X-Request-Id` header, falling back to the body's `requestId` |
+There is **no `statusCode` field**. `code` is a **string** when the error has its
+own code (upper-snake, such as `SPENDING_LIMIT_EXCEEDED`) and otherwise the
+**numeric HTTP status**, so it does not always equal the status. The package
+chooses the condition class from the **HTTP status**, never from a body field,
+and `$code` refines the meaning inside a class: a 403 with
+`SPENDING_LIMIT_EXCEEDED` is still a `topolab_access_denied_error`.
 
-Quote `$request_id` when reporting a problem.
+Each condition built from a response carries:
+
+| Field | Type | Meaning |
+|---|---|---|
+| `$status` | integer | HTTP status of the response. Use this for numeric checks. |
+| `$code` | character or integer | The envelope's `code`; the HTTP status when the body has none (for example a proxy's error page). |
+| `$details` | named list or `NULL` | The envelope's allow-listed `details`, when present. |
+| `$message` | character | Server message |
+| `$request_id` | character | `X-Request-Id` header, falling back to the body's `requestId` |
+
+Conditions raised before a request is sent (client-side validation, a missing
+key) carry no `$status`, `$code` or `$details`. Quote `$request_id` when
+reporting a problem.
+
+```r
+ds <- tl_dataset(tl, "nl-domino-poi")
+tryCatch(
+  tl_download(ds, "poi.geojson"),
+  topolab_access_denied_error = function(e) {
+    if (identical(e$code, "SPENDING_LIMIT_EXCEEDED")) {
+      message("Monthly limit reached; resets at ", e$details$periodEnd)
+    } else {
+      stop(e)
+    }
+  }
+)
+```
+
+Compare string codes with `identical()` (or `==` after checking
+`is.character(e$code)`). If you used to read the body's `code` as the HTTP
+status, read `e$status` instead.
+
+## Known string codes
+
+Codes this package's calls can return:
+
+| Status | `$code` | Raised as | Meaning | `$details` |
+|---|---|---|---|---|
+| 403 | `SPENDING_LIMIT_EXCEEDED` | `topolab_access_denied_error` | A metered call (download, SQL) would pass the organization's monthly spending limit. | `limit`, `consumed`, `remaining` (numbers), `periodEnd` (ISO 8601 timestamp) |
+| 400 | `SQL_DATA_ERROR` | `topolab_validation_error` | The SQL query raised a data error while evaluating a value, such as a bad cast. The message names the SQLSTATE. | none |
+| 400 | `MAX_NODES_EXCEEDED`, `MAX_DEPTH_EXCEEDED`, `MAX_ARRAY_LENGTH_EXCEEDED`, `MAX_KEYS_EXCEEDED` | `topolab_validation_error` | A JSON request body is larger or deeper than the server accepts. | none |
+| 400 | `PROTOTYPE_POLLUTION_KEY` | `topolab_validation_error` | A JSON request body contains a forbidden key (`__proto__`, `constructor`, `prototype`). | none |
+
+Numeric codes that carry `$details`:
+
+| `$code` | Raised as | `$details` |
+|---|---|---|
+| `402` | `topolab_insufficient_credits_error` (also on `$required` / `$available`) | `required`, `available` |
+| `413` | `topolab_validation_error` | `quotaBytes`, `usageBytes`, `additionalBytes` (Data Studio uploads) |
+
+Other parts of the API use further codes, listed in the
+[SDK conventions](https://github.com/topolab-bv/topolab-sdk-spec/blob/main/conventions.md#known-string-codes):
+`HIGH_VALUE_DATA_REQUIRED` (403, `details.columns` / `details.datasetIds`),
+`REGENERATE_REQUIRED` (410) and `METADATA_NOT_READABLE` (400) from Data Studio,
+`SSO_REQUIRED` (403) and `SSO_CHECK_UNAVAILABLE` (503) from sign-in, and the
+order add-on and delivery-destination codes. The chat API reports a failed turn
+on its event stream with lower-snake codes such as `ai_busy`, `ai_interrupted`
+and `ai_cancelled`; this package does not call it.
 
 ## Recognising an add-on requirement
 

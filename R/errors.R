@@ -25,9 +25,30 @@ topolab_error <- function(message, class, status = NULL, ..., call = NULL) {
   if (!nzchar(slug)) NULL else slug
 }
 
-# The engine's error envelope is {code, message, path, method, time, requestId}.
-# There is no `statusCode` field, and `code` merely mirrors the HTTP status, so
-# the mapping below branches on the *HTTP status* and never on a body field.
+# The envelope's `code`: a string such as "SPENDING_LIMIT_EXCEEDED" when the
+# engine throws a named code, otherwise the numeric HTTP status. Anything else
+# (absent, empty, logical, a list) falls back to the HTTP status, so a proxy's
+# error page still yields a usable code.
+.tl_envelope_code <- function(code, status) {
+  if (is.character(code) && length(code) == 1L && !is.na(code) && nzchar(code)) {
+    return(code)
+  }
+  if (is.numeric(code) && length(code) == 1L && is.finite(code) && code == round(code)) {
+    return(as.integer(code))
+  }
+  as.integer(status)
+}
+
+# The envelope's allow-listed `details` object as a named list, or NULL.
+.tl_envelope_details <- function(details) {
+  if (is.list(details) && !is.null(names(details))) details else NULL
+}
+
+# The engine's error envelope is {code, message, path, method, time, requestId},
+# plus `details` for some errors. There is no `statusCode` field, and `code` is a
+# string code or the numeric status, so the class below is chosen from the
+# *HTTP status* and never from a body field; `$code` only refines it (a 403 with
+# SPENDING_LIMIT_EXCEEDED is still a topolab_access_denied_error).
 abort_from_response <- function(resp) {
   status <- httr2::resp_status(resp)
   body <- tryCatch(httr2::resp_body_json(resp), error = function(e) list())
@@ -47,11 +68,17 @@ abort_from_response <- function(resp) {
   # The request id is returned both as a header and in the body; fall back to the
   # body so it survives proxies that strip the header.
   request_id <- tryCatch(httr2::resp_header(resp, "X-Request-Id"), error = function(e) NULL)
-  extra <- list(status = status, request_id = request_id %||% body$requestId)
+  details <- .tl_envelope_details(body$details)
+  extra <- list(
+    status = status,
+    code = .tl_envelope_code(body$code, status),
+    details = details,
+    request_id = request_id %||% body$requestId
+  )
   if (identical(cls, "topolab_addon_required_error")) extra$addon <- addon
   if (identical(cls, "topolab_insufficient_credits_error")) {
-    extra$required <- body$details$required
-    extra$available <- body$details$available
+    extra$required <- details$required
+    extra$available <- details$available
   }
   if (identical(cls, "topolab_rate_limit_error")) extra$retry_after <- body$retryAfter
   stop(do.call(topolab_error, c(list(message = msg, class = cls), extra)))

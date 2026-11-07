@@ -140,6 +140,10 @@ tryCatch(
 `$addon` is the hyphenated add-on slug (`api-access`, `gis-access`,
 `archived-data`, `high-value-data`, `sql-access`). Every condition also carries
 `$status` and `$request_id` — quote the request id when reporting a problem.
+Conditions built from a response also carry `$code` (a string such as
+`"SPENDING_LIMIT_EXCEEDED"` when the error has its own code, otherwise the
+numeric status) and `$details` (extra fields, when present). See
+[docs/errors.md](docs/errors.md) for the known codes.
 
 ## Documentation
 

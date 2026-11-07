@@ -33,10 +33,45 @@ topolab_error <- function(message, class, status = NULL, ..., call = NULL) {
   if (is.character(code) && length(code) == 1L && !is.na(code) && nzchar(code)) {
     return(code)
   }
-  if (is.numeric(code) && length(code) == 1L && is.finite(code) && code == round(code)) {
+  # A whole number inside R's integer range; anything larger would become NA
+  # (with a warning) on conversion, so it falls back to the status instead.
+  if (is.numeric(code) && length(code) == 1L && is.finite(code) && code == round(code) &&
+      abs(code) <= .Machine$integer.max) {
     return(as.integer(code))
   }
   as.integer(status)
+}
+
+# A non-negative, finite number of seconds from a number or a numeric string,
+# or NULL.
+.tl_seconds <- function(x) {
+  if (is.null(x) || length(x) != 1L || is.logical(x)) return(NULL)
+  n <- suppressWarnings(as.numeric(x))
+  if (is.na(n) || !is.finite(n) || n < 0) NULL else n
+}
+
+# How long the server asked the client to wait, in seconds, or NA_real_ when it
+# did not say. The Retry-After header comes first (seconds, or an HTTP date):
+# the engine sends it on every 429 that carries a wait, rounded up. Then
+# details.retryAfter (engine #650 and later), then a top-level retryAfter from
+# older engines. This is also the `after` callback for httr2::req_retry(), which
+# requires a single number or NA, never NULL.
+.tl_retry_after <- function(resp) {
+  header <- tryCatch(httr2::resp_header(resp, "Retry-After"), error = function(e) NULL)
+  secs <- .tl_seconds(header)
+  if (is.null(secs) && !is.null(header)) {
+    # An HTTP date; httr2 measures it against the response's Date header.
+    secs <- .tl_seconds(tryCatch(httr2::resp_retry_after(resp), error = function(e) NULL))
+  }
+  if (is.null(secs)) {
+    body <- tryCatch(httr2::resp_body_json(resp), error = function(e) NULL)
+    if (is.list(body)) {
+      details <- body$details
+      if (is.list(details)) secs <- .tl_seconds(details$retryAfter)
+      if (is.null(secs)) secs <- .tl_seconds(body$retryAfter)
+    }
+  }
+  if (is.null(secs)) NA_real_ else secs
 }
 
 # The envelope's allow-listed `details` object as a named list, or NULL.
@@ -80,6 +115,9 @@ abort_from_response <- function(resp) {
     extra$required <- details$required
     extra$available <- details$available
   }
-  if (identical(cls, "topolab_rate_limit_error")) extra$retry_after <- body$retryAfter
+  if (identical(cls, "topolab_rate_limit_error")) {
+    wait <- .tl_retry_after(resp)
+    if (!is.na(wait)) extra$retry_after <- wait
+  }
   stop(do.call(topolab_error, c(list(message = msg, class = cls), extra)))
 }

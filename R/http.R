@@ -1,6 +1,6 @@
 # httr2 request building with retry + typed errors.
 
-.tl_user_agent <- function() "topolab-r/0.2.0 (+https://docs.topolab.nl)"
+.tl_user_agent <- function() "topolab-r/0.2.1 (+https://docs.topolab.nl)"
 
 tl_req <- function(client, path, query = list()) {
   query <- query[!vapply(query, is.null, logical(1))]
@@ -16,10 +16,7 @@ tl_req <- function(client, path, query = list()) {
     req,
     max_tries = client$max_retries + 1L,
     is_transient = function(resp) httr2::resp_status(resp) %in% c(429, 500, 502, 503, 504),
-    after = function(resp) {
-      body <- tryCatch(httr2::resp_body_json(resp), error = function(e) list())
-      if (!is.null(body$retryAfter)) as.numeric(body$retryAfter) else NULL
-    }
+    after = .tl_retry_after
   )
   # We map errors ourselves rather than letting httr2 abort.
   httr2::req_error(req, is_error = function(resp) FALSE)

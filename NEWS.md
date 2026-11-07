@@ -1,5 +1,14 @@
-# topolab (development version)
+# topolab 0.2.0
 
+* **Conditions carry `$code` and `$details`.** The engine's error envelope now
+  carries a string `code` when the error has its own (upper-snake, such as
+  `SPENDING_LIMIT_EXCEEDED`), and otherwise the numeric HTTP status, so `code` no
+  longer always equals the status. `$code` is a character string or an integer,
+  falling back to the HTTP status when the body has no usable code. `$details`
+  is the envelope's allow-listed `details` as a named list, or `NULL`. `$status`
+  stays the HTTP status, and condition classes are still chosen from it: a 403
+  with `SPENDING_LIMIT_EXCEEDED` is a `topolab_access_denied_error`.
+  `docs/errors.md` lists the known string codes and what they mean.
 * Backend integration surface for pulling what your organization licences:
   `tl_datasets_owned()` and `tl_datasets_owned_all()` (auto-paging),
   `tl_archives()` and `tl_archive()` for monthly snapshots, `tl_coordinates()`

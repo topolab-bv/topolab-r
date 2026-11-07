@@ -1,6 +1,6 @@
 # httr2 request building with retry + typed errors.
 
-.tl_user_agent <- function() "topolab-r/0.1.0 (+https://docs.topolab.nl)"
+.tl_user_agent <- function() "topolab-r/0.2.0 (+https://docs.topolab.nl)"
 
 tl_req <- function(client, path, query = list()) {
   query <- query[!vapply(query, is.null, logical(1))]

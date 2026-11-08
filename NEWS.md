@@ -12,6 +12,9 @@
 * Fixed: a numeric `code` outside R's integer range became `NA` with a coercion
   warning. It now falls back to the HTTP status.
 * `docs/errors.md` lists both 429 codes and their `details`.
+* `docs/errors.md` names the chat API's stream error codes in upper-snake case
+  (`AI_BUSY`, `AI_INTERRUPTED`, `AI_CANCELLED`), matching the engine, which
+  renamed every chat error code from lower-snake.
 
 # topolab 0.2.0
 

@@ -11,7 +11,7 @@ inherits from `topolab_error`.
 | `topolab_access_denied_error` | dataset not accessible to your organization, or the monthly spending limit is reached (`$code == "SPENDING_LIMIT_EXCEEDED"`) (403) |
 | `topolab_not_found_error` | unknown dataset, collection, or archive month (404) |
 | `topolab_query_timeout_error` | SQL query exceeded the server statement timeout (408) |
-| `topolab_rate_limit_error` | rate limited — `$retry_after`, retried automatically (429) |
+| `topolab_rate_limit_error` | rate limited (`$code` `RATE_LIMIT_EXCEEDED`) or the key's usage quota is used up (`USAGE_QUOTA_EXCEEDED`) — `$retry_after`, retried automatically (429) |
 | `topolab_configuration_error` | client misconfiguration (missing key, invalid base URL) |
 | `topolab_validation_error` | invalid request parameters (400/4xx), including ones caught client-side |
 | `topolab_server_error` | upstream error (5xx), retried automatically |
@@ -96,6 +96,8 @@ Codes this package's calls can return:
 | 400 | `SQL_DATA_ERROR` | `topolab_validation_error` | The SQL query raised a data error while evaluating a value, such as a bad cast. The message names the SQLSTATE. | none |
 | 400 | `MAX_NODES_EXCEEDED`, `MAX_DEPTH_EXCEEDED`, `MAX_ARRAY_LENGTH_EXCEEDED`, `MAX_KEYS_EXCEEDED` | `topolab_validation_error` | A JSON request body is larger or deeper than the server accepts. | none |
 | 400 | `PROTOTYPE_POLLUTION_KEY` | `topolab_validation_error` | A JSON request body contains a forbidden key (`__proto__`, `constructor`, `prototype`). | none |
+| 429 | `RATE_LIMIT_EXCEEDED` | `topolab_rate_limit_error` | The API key passed its per-minute rate limit. The response also carries a `Retry-After` header. | `retryAfter` (seconds), `limit`, `remaining` (numbers), `resetAt` (ISO 8601 timestamp) |
+| 429 | `USAGE_QUOTA_EXCEEDED` | `topolab_rate_limit_error` | The API key has used up its usage quota. Waiting does not help; `$retry_after` is `NULL`. | `quota`, `used` (numbers) |
 
 Numeric codes that carry `$details`:
 
@@ -149,6 +151,9 @@ rather than sent, which saves a round trip and — on metered routes — a credi
 ## Retries
 
 Transient statuses (`429`, `500`, `502`, `503`, `504`) are retried with backoff
-via `httr2::req_retry`, honouring a `retryAfter` body field when present.
+via `httr2::req_retry`. When the server says how long to wait, the package waits
+that long instead, reading in order the `Retry-After` header (seconds, or an HTTP
+date), `details.retryAfter`, and the top-level `retryAfter` that engines older
+than the `RATE_LIMIT_EXCEEDED` code send. `$retry_after` holds the same value.
 `max_retries` (default 3) is the number of retries **after** the first attempt.
 A `408` query timeout is **not** retried — rerun a cheaper query instead.

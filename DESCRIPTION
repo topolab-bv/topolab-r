@@ -1,7 +1,7 @@
 Package: topolab
 Type: Package
 Title: Client for the Topolab Dataset and Geospatial API
-Version: 0.2.0
+Version: 0.2.1
 Authors@R: person("Topolab B.V.", role = c("aut", "cre"), email = "support@topolab.nl")
 Description: Reads Topolab datasets and OGC API - Features collections into
     R, returning GeoJSON and optionally 'sf' objects for spatial analysis.

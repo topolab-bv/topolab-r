@@ -1,3 +1,18 @@
+# topolab 0.2.1
+
+* Fixed: a retryable response (429, 500, 502, 503, 504) whose body had no
+  top-level `retryAfter` made `httr2::req_retry()` abort with "The `after`
+  callback to `req_retry()` must return a single number or NA, not `NULL`"
+  instead of retrying. The callback now returns `NA` when the server gives no
+  wait, so httr2 falls back to its backoff.
+* 429 handling follows the engine's `RATE_LIMIT_EXCEEDED` and
+  `USAGE_QUOTA_EXCEEDED` codes. The wait is read from the `Retry-After` header
+  (seconds or an HTTP date), then `details.retryAfter`, then the older top-level
+  `retryAfter`; `$retry_after` and the retry delay use the same rule.
+* Fixed: a numeric `code` outside R's integer range became `NA` with a coercion
+  warning. It now falls back to the HTTP status.
+* `docs/errors.md` lists both 429 codes and their `details`.
+
 # topolab 0.2.0
 
 * **Conditions carry `$code` and `$details`.** The engine's error envelope now

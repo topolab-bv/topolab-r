@@ -83,7 +83,33 @@ test_that("the wait is read from the header, then details, then the older body f
   expect_true(is.na(.tl_retry_after(.resp(429, .quota_json))))
   expect_true(is.na(.tl_retry_after(.resp(503, "<html>down</html>"))))
   expect_true(is.na(.tl_retry_after(.resp(429, '{"details": {"retryAfter": -1}}'))))
-  expect_true(is.na(.tl_retry_after(.resp(429, '{"code": 429}', list(`Retry-After` = "soon")))))
+})
+
+# A proxy can send a Retry-After that is neither seconds nor an HTTP date. That
+# is not a usable wait: the body's wait applies, or NA, and nothing warns (the
+# function is also the req_retry() callback, so a warning would reach the caller
+# on every retry).
+test_that("an unusable Retry-After header is skipped without a warning", {
+  expect_no_warning(
+    wait <- .tl_retry_after(.resp(429, '{"code": 429}', list(`Retry-After` = "soon")))
+  )
+  expect_true(is.na(wait))
+  expect_no_warning(
+    wait <- .tl_retry_after(.resp(429, .rate_limited_json, list(`Retry-After` = "soon")))
+  )
+  expect_equal(wait, 42)
+  expect_no_warning(
+    wait <- .tl_retry_after(.resp(429, '{"code": 429}', list(`Retry-After` = "Someday, maybe")))
+  )
+  expect_true(is.na(wait))
+})
+
+test_that("a Retry-After HTTP date is measured against the Date header", {
+  wait <- .tl_retry_after(.resp(429, '{"code": 429}', list(
+    `Retry-After` = "Sat, 07 Nov 2026 12:01:30 GMT",
+    Date = "Sat, 07 Nov 2026 12:01:00 GMT"
+  )))
+  expect_equal(wait, 30)
 })
 
 # httr2 mocks bypass req_retry(), so the retry policy is checked directly. httr2

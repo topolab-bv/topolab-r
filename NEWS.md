@@ -9,6 +9,9 @@
   `USAGE_QUOTA_EXCEEDED` codes. The wait is read from the `Retry-After` header
   (seconds or an HTTP date), then `details.retryAfter`, then the older top-level
   `retryAfter`; `$retry_after` and the retry delay use the same rule.
+* Fixed: a `Retry-After` header that is neither seconds nor an HTTP date (such
+  as `soon` from a proxy) raised "NAs introduced by coercion" on every error and
+  every retry. It is now skipped silently and the body's wait applies.
 * Fixed: a numeric `code` outside R's integer range became `NA` with a coercion
   warning. It now falls back to the HTTP status.
 * `docs/errors.md` lists both 429 codes and their `details`.

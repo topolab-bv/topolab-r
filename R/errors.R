@@ -59,8 +59,11 @@ topolab_error <- function(message, class, status = NULL, ..., call = NULL) {
 .tl_retry_after <- function(resp) {
   header <- tryCatch(httr2::resp_header(resp, "Retry-After"), error = function(e) NULL)
   secs <- .tl_seconds(header)
-  if (is.null(secs) && !is.null(header)) {
-    # An HTTP date; httr2 measures it against the response's Date header.
+  if (is.null(secs) && is.character(header) && grepl(" ", header, fixed = TRUE)) {
+    # An HTTP date; httr2 measures it against the response's Date header. Only
+    # a value with a space can be one: httr2 coerces anything else with
+    # as.numeric(), which warns on a value such as "soon" that .tl_seconds()
+    # has already rejected.
     secs <- .tl_seconds(tryCatch(httr2::resp_retry_after(resp), error = function(e) NULL))
   }
   if (is.null(secs)) {

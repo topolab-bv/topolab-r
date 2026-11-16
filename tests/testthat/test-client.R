@@ -17,7 +17,7 @@ test_that("tl_client defaults to production", {
 test_that("tl_client selects staging via environment", {
   withr::local_envvar(TOPOLAB_BASE_URL = "", TOPOLAB_ENV = "")
   expect_equal(tl_client(api_key = "k", environment = "staging")$base_url,
-               "https://api-staging.topolab.nl")
+               "https://api.topolab.dev")
 })
 
 test_that("tl_client errors on an unknown environment", {
@@ -26,7 +26,7 @@ test_that("tl_client errors on an unknown environment", {
 
 test_that("TOPOLAB_ENV env var selects staging", {
   withr::local_envvar(TOPOLAB_BASE_URL = "", TOPOLAB_ENV = "staging")
-  expect_equal(tl_client(api_key = "k")$base_url, "https://api-staging.topolab.nl")
+  expect_equal(tl_client(api_key = "k")$base_url, "https://api.topolab.dev")
 })
 
 test_that("explicit base_url beats environment", {

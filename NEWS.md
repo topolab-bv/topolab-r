@@ -1,3 +1,8 @@
+# topolab (development version)
+
+* The staging base URL is now `https://api.topolab.dev` (was
+  `https://api-staging.topolab.nl`). `environment = "staging"` resolves to it.
+
 # topolab 0.2.1
 
 * Fixed: a retryable response (429, 500, 502, 503, 504) whose body had no

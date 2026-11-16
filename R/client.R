@@ -2,7 +2,7 @@
 # keyword away. Self-hosting / tests can still pass an explicit base_url.
 .tl_environments <- c(
   production = "https://api.topolab.nl",
-  staging    = "https://api-staging.topolab.nl"
+  staging    = "https://api.topolab.dev"
 )
 
 .tl_environment_url <- function(name) {

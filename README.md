@@ -58,7 +58,7 @@ The client targets **production** (`https://api.topolab.nl`) by default. Point i
 at staging with the `environment` argument:
 
 ```r
-tl <- tl_client(api_key = "tlb_staging_...", environment = "staging") # https://api-staging.topolab.nl
+tl <- tl_client(api_key = "tlb_staging_...", environment = "staging") # https://api.topolab.dev
 ```
 
 Or set `TOPOLAB_ENV=staging`. An explicit `base_url=` always wins (self-hosting /

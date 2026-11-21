@@ -185,7 +185,7 @@ test_that("tl_archive rejects an unsupported format", {
   }
 }
 
-test_that("tl_coordinates attaches the paging headers and keeps lat/lon as strings", {
+test_that("tl_coordinates attaches the paging headers", {
   cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl")
   httr2::local_mocked_responses(.coordinates_mock(list(
     `X-Total-Count` = "119", `X-Returned-Count` = "2", `X-Offset` = "40"
@@ -196,11 +196,58 @@ test_that("tl_coordinates attaches the paging headers and keeps lat/lon as strin
   expect_equal(attr(rows, "total"), 119L)
   expect_equal(attr(rows, "returned"), 2L)
   expect_equal(attr(rows, "offset"), 40L)
-  # latitude/longitude arrive as JSON strings and are not coerced
-  expect_type(rows[[1]]$latitude, "character")
-  expect_equal(rows[[1]]$latitude, "51.49638600")
-  expect_equal(rows[[1]]$location$type, "Point")
-  expect_equal(rows[[1]]$metadata$city, "Middelburg")
+})
+
+test_that("coordinates rows are flat: the dataset's columns sit on the row itself", {
+  cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl")
+  httr2::local_mocked_responses(.coordinates_mock(list()))
+  row <- tl_coordinates(tl_dataset(cl, "business_professional_services_autocrew"))[[1]]
+  for (gone in c("metadata", "location", "datasetId", "dataset")) {
+    expect_false(gone %in% names(row), info = gone)
+  }
+  expect_equal(row$id, "02be5c77-fe43-44ca-878a-48cddddde98c")
+  expect_type(row$latitude, "double")
+  expect_equal(row$latitude, 51.496386)
+  expect_equal(row$longitude, 3.655321)
+  expect_equal(row$geo_type, "POINT")
+  expect_equal(row$geometry$type, "Point")
+  expect_equal(unlist(row$geometry$coordinates), c(3.655321, 51.496386))
+  expect_equal(row$city, "Middelburg")
+  expect_equal(row$street, "Amp\u00e8reweg")
+  # Lists stay lists and an empty value is a present NULL.
+  expect_equal(row$tags, list())
+  expect_true("unit" %in% names(row))
+  expect_null(row$unit)
+})
+
+test_that("coordinates rows keep the order the API sends", {
+  cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl")
+  httr2::local_mocked_responses(.coordinates_mock(list()))
+  rows <- tl_coordinates(tl_dataset(cl, "business_professional_services_autocrew"))
+  sent <- jsonlite::fromJSON(fixture("coordinates.json"), simplifyVector = FALSE)
+  for (i in seq_along(rows)) {
+    keys <- names(rows[[i]])
+    expect_equal(keys, names(sent[[i]]))
+    expect_equal(keys[1], "id")
+    expect_equal(keys[length(keys)], "geometry")
+    at <- match("location_name", keys)
+    expect_equal(keys[at + 1:2], c("latitude", "longitude"))
+  }
+})
+
+test_that("tl_coordinates keeps NULL coordinates for a record with no position", {
+  cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl")
+  body <- paste0('[{"id":"r","location_name":"Unplaced","latitude":null,"longitude":null,',
+                 '"city":null,"geo_type":"POINT","geometry":{"type":"Point","coordinates":[null,null]}}]')
+  httr2::local_mocked_responses(function(req) {
+    httr2::response(200, headers = list(`Content-Type` = "application/json"),
+                    body = charToRaw(body))
+  })
+  row <- tl_coordinates(tl_dataset(cl, "nl-domino-poi"))[[1]]
+  expect_null(row$latitude)
+  expect_null(row$longitude)
+  expect_equal(names(row), c("id", "location_name", "latitude", "longitude", "city",
+                             "geo_type", "geometry"))
 })
 
 test_that("tl_coordinates falls back when the paging headers are missing", {

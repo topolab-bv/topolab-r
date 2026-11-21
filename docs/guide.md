@@ -77,10 +77,10 @@ Team plans see a trailing 12 months of archives; Enterprise and full-history
 add-ons see everything. `tl_archives()` already reflects your window, so it never
 lists a month that would 404.
 
-## Coordinates
+## Coordinates as flat rows
 
-`tl_coordinates()` returns raw coordinate rows with their attribute bag. The
-paging facts arrive in response headers rather than an envelope, and the package
+`tl_coordinates()` returns one flat row per record, ordered by `id`. The paging
+facts arrive in response headers rather than an envelope, and the package
 attaches them as attributes:
 
 ```r
@@ -91,14 +91,24 @@ attr(rows, "offset")     # offset applied
 ```
 
 Omit both arguments to take the whole dataset in one response (capped at 50000
-rows). `latitude` and `longitude` come back as **strings**, exactly as the API
-sends them, and are not coerced — convert explicitly when you need numbers:
+rows). Each row is a named list: the free sample's row for your tier plus the
+record's `id`, in the API's column order.
 
 ```r
-lat <- as.numeric(rows[[1]]$latitude)
-lon <- as.numeric(rows[[1]]$longitude)
-rows[[1]]$location$coordinates          # numeric c(lon, lat), GeoJSON order
+row <- rows[[1]]
+row$latitude              # numeric (WGS 84), NULL for a record with no position
+row$longitude
+row$geo_type              # "POINT"
+row$geometry$coordinates  # list(lon, lat), GeoJSON order
+row$city                  # the dataset's columns sit on the row itself
+names(row)                # id first, latitude/longitude after location_name, geometry last
 ```
+
+The dataset's columns vary per dataset and tier; the dataset detail
+(`tl_metadata(ds)`) describes them in `columns`. An empty value is
+`NULL` and a list (`tags`, `category_path`) stays a list. The advanced columns
+(such as `phone`, `email`, `website`, `hours`, `services`) appear only if your
+organization holds the High-Value Data add-on for the dataset.
 
 ## SQL (Enterprise)
 

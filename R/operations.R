@@ -356,10 +356,23 @@ tl_archive <- function(dataset, path, month = "latest", format = "geojson") {
   .tl_stream_to_file(req, path)
 }
 
-#' Paginated coordinates with attributes
+#' Paginated records as flat rows
 #'
 #' Omit both parameters to receive the whole dataset in one response (capped at
-#' 50000 rows); pass either to page.
+#' 50000 rows); pass either to page. Rows are ordered by `id`.
+#'
+#' Each row is one record as a flat named list: the free sample's row for your
+#' tier plus the record's `id`. The names keep the order the API sends: `id`
+#' first, `latitude` and `longitude` directly after `location_name`, `geo_type`
+#' after the dataset's columns, and `geometry` last. `latitude` and `longitude`
+#' are numeric (WGS 84), or `NULL` for a record with no position; `geo_type` is
+#' `"POINT"`; `geometry` is a GeoJSON Point whose `coordinates` hold
+#' `list(longitude, latitude)`. Every other element is one of the dataset's
+#' columns (`row$city`); they vary per dataset and tier, and the dataset detail
+#' (`tl_metadata()`) describes them in `columns`. An empty value is `NULL` and
+#' a list (`tags`, `category_path`) stays a list. The advanced columns (such as
+#' `phone`, `email`, `website`, `hours`, `services`) are present only with the
+#' High-Value Data add-on for the dataset.
 #'
 #' The paging facts arrive in response headers rather than an envelope, and are
 #' attached to the result as attributes: `attr(x, "total")` (all rows in the
@@ -367,17 +380,12 @@ tl_archive <- function(dataset, path, month = "latest", format = "geojson") {
 #' A missing or unparseable header falls back to the number of rows returned
 #' (`total`, `returned`) or 0 (`offset`) rather than failing.
 #'
-#' `latitude` and `longitude` come back as **strings**, exactly as the API sends
-#' them; they are not coerced. Use `as.numeric()` when you need numbers — the
-#' numeric pair is also available as `row$location$coordinates`
-#' (`c(longitude, latitude)`, GeoJSON order).
-#'
 #' @param dataset A `topolab_dataset`.
 #' @param limit Rows per request, 1-50000.
 #' @param offset Row offset, >= 0.
-#' @return A list of rows, each with `id`, `location` (GeoJSON geometry),
-#'   `latitude`, `longitude` and `metadata`, carrying the paging attributes
-#'   described above.
+#' @return A list of rows, each a flat named list (`id`, the dataset's columns
+#'   with `latitude` and `longitude`, `geo_type`, `geometry`), carrying the
+#'   paging attributes described above.
 #' @export
 tl_coordinates <- function(dataset, limit = NULL, offset = NULL) {
   q <- list(limit = .tl_check_count(limit, "limit", 1L, 50000L),

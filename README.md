@@ -102,9 +102,10 @@ tl_download(ds, "dominos.geojson")                # save an export to disk
 tl_archives(ds)                                   # available months, newest first
 tl_archive(ds, "dominos-2026-07.zip", month = "2026-07", format = "csv")
 
-# Raw coordinates + attributes (paging facts in attributes)
+# Records as flat rows (paging facts in attributes)
 rows <- tl_coordinates(ds, limit = 1000)
 attr(rows, "total")
+rows[[1]]$latitude                                # numeric; the dataset's columns sit on the row
 
 # Read-only SQL over the datasets you licence (Enterprise `sql-access`)
 tl_sql(tl, "SELECT city, count(*) AS n FROM nl_domino_poi GROUP BY city")

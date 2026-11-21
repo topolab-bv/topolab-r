@@ -27,7 +27,7 @@ tl_dataset(client, slug)  # lazy handle for one dataset
 | `tl_download(dataset, path, format = "geojson")` | path (invisibly) | Streamed; `csv`/`json`/`geojson`/`kml`/`shp`, checked client-side |
 | `tl_archives(dataset)` | list | Monthly archives, newest first (`month`, `formats`, `archiveDate`) |
 | `tl_archive(dataset, path, month = "latest", format = "geojson")` | path (invisibly) | Streamed zip; `month` is `latest`/`YYYY-MM`/`YYYY-MM-DD` |
-| `tl_coordinates(dataset, limit = NULL, offset = NULL)` | list | Coordinate rows; paging in attributes; `limit` ≤ 50000 |
+| `tl_coordinates(dataset, limit = NULL, offset = NULL)` | list | Flat rows, one per record; paging in attributes; `limit` ≤ 50000 |
 | `tl_sql(client, query, max_rows = NULL)` | data.frame | Enterprise `sql-access`; result metadata in attributes |
 | `tl_items(dataset, bbox, limit = 100, offset, category, city, country)` | list | One page of OGC features |
 | `tl_items_all(dataset, page_size = 100, total_limit = NULL, bbox, ..., parallel = TRUE, max_concurrency = 6)` | list | Auto-paginates; concurrent by default |
@@ -83,9 +83,13 @@ add-ons see everything.
 unparseable header falls back to the number of rows returned (`total`,
 `returned`) or `0` (`offset`) rather than failing.
 
-`latitude` and `longitude` are returned as **strings**, exactly as the API sends
-them, and are not coerced. `location$coordinates` holds the same pair as numbers
-in GeoJSON order (`lon, lat`).
+Each row is a flat named list: the free sample's row for your tier plus the
+record's `id`. `names(row)` reads `id` first, `latitude` and `longitude`
+directly after `location_name`, `geo_type` after the dataset's columns, and
+`geometry` last. `latitude` and `longitude` are numeric, or `NULL` for a record
+with no position; `geometry$coordinates` holds `list(lon, lat)` in GeoJSON
+order. An empty value is `NULL` and a list (`tags`, `category_path`) stays a
+list.
 
 ## SQL result attributes
 

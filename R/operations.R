@@ -65,12 +65,16 @@ tl_geojson <- function(dataset) {
 # Stream a request body to `path`. Downloads land in a temp file next to the
 # destination so an error response is never written to `path`, and a partial
 # download (connection dropped mid-body) cannot leave a truncated file at the
-# destination. Status is checked before the atomic rename.
-.tl_stream_to_file <- function(req, path) {
+# destination. Status is checked before the atomic rename. `on_error` maps an
+# error response to a condition.
+.tl_stream_to_file <- function(req, path, on_error = abort_from_response) {
   tmp <- tempfile(tmpdir = dirname(path), fileext = ".part")
   on.exit(if (file.exists(tmp)) unlink(tmp), add = TRUE)
   resp <- httr2::req_perform(req, path = tmp)
-  if (httr2::resp_status(resp) >= 400) abort_from_response(resp)
+  if (httr2::resp_status(resp) >= 400) on_error(resp)
+  # A response whose body httr2 kept in memory (a mocked response) has written
+  # nothing to `tmp`; write it, so the destination always holds the body.
+  if (!file.exists(tmp) && is.raw(resp$body)) writeBin(resp$body, tmp)
   if (!file.rename(tmp, path)) {
     file.copy(tmp, path, overwrite = TRUE)
   }
@@ -78,6 +82,15 @@ tl_geojson <- function(dataset) {
 }
 
 #' Download a dataset export to disk
+#'
+#' Writes the current month's file. It asks the link route
+#' (`POST /v1/dataset/:table/exports`) for a signed link to the file and
+#' fetches it with a plain request that sends no API key. While the file is
+#' being prepared it waits the `retryAfterSeconds` the server names (at least 1
+#' second, 5 when it names none) and asks again, for at most 30 minutes, then
+#' raises a `topolab_server_error` with `code` `"FILE_PREPARING"`. A server
+#' without the link route (404 or 405) gets today's `GET .../files/:format`
+#' instead, decided on every call. Other errors (402, 403, 5xx) are raised.
 #'
 #' An unsupported `format` is rejected client-side as a
 #' `topolab_validation_error` rather than sent, matching the other Topolab SDKs
@@ -90,8 +103,8 @@ tl_geojson <- function(dataset) {
 #' @export
 tl_download <- function(dataset, path, format = "geojson") {
   format <- .tl_check_bulk_format(format)
-  req <- tl_req(dataset$client, paste0("v1/dataset/", dataset$slug, "/files/", format))
-  .tl_stream_to_file(req, path)
+  .tl_fetch_via_link(dataset, list(format = format, bundle = "file"),
+                     paste0("v1/dataset/", dataset$slug, "/files/", format), path)
 }
 
 # The OGC collectionId is the dataset slug (`table`), so the items endpoints are
@@ -342,6 +355,10 @@ tl_archives <- function(dataset) {
 #' months that have not started both answer 404 and are deliberately
 #' indistinguishable, so the response never reveals an archive you cannot access.
 #'
+#' The zip comes through the link route, like [tl_download()]: a signed link
+#' fetched without the API key, waiting while the file is prepared, and today's
+#' `GET .../archives/:month/:format` on a server without the link route.
+#'
 #' @param dataset A `topolab_dataset`.
 #' @param path Destination file path; the archive is a zip.
 #' @param month "latest" (default), "YYYY-MM" or "YYYY-MM-DD".
@@ -351,9 +368,9 @@ tl_archives <- function(dataset) {
 tl_archive <- function(dataset, path, month = "latest", format = "geojson") {
   month <- .tl_check_month(month)
   format <- .tl_check_bulk_format(format)
-  req <- tl_req(dataset$client,
-                paste0("v1/dataset/", dataset$slug, "/archives/", month, "/", format))
-  .tl_stream_to_file(req, path)
+  .tl_fetch_via_link(dataset, list(format = format, month = month, bundle = "zip"),
+                     paste0("v1/dataset/", dataset$slug, "/archives/", month, "/", format),
+                     path)
 }
 
 #' Paginated coordinates with attributes

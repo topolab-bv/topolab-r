@@ -96,7 +96,7 @@ ds <- tl_dataset(tl, "nl-domino-poi")
 tl_metadata(ds)                                   # dataset metadata
 tl_sample(ds, format = "geojson")                 # free sample, no credits
 tl_geojson(ds)                                    # full dataset as GeoJSON
-tl_download(ds, "dominos.geojson")                # save an export to disk
+tl_download(ds, "dominos.geojson")                # save an export to disk (signed link)
 
 # Monthly archives
 tl_archives(ds)                                   # available months, newest first
@@ -115,6 +115,11 @@ tl_items_all(ds, page_size = 500)                 # auto-paginate everything
 
 as_sf(ds)                                         # materialize as an sf object
 ```
+
+`tl_download()` and `tl_archive()` fetch the file through a 10-minute signed
+link that is requested with your key and fetched without it. On a server
+without the link route they use the old routes, decided on every call. See
+[the guide](docs/guide.md#how-tl_download-and-tl_archive-fetch-a-file).
 
 ## Errors
 

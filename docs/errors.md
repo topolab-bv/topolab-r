@@ -98,6 +98,9 @@ Codes this package's calls can return:
 | 400 | `PROTOTYPE_POLLUTION_KEY` | `topolab_validation_error` | A JSON request body contains a forbidden key (`__proto__`, `constructor`, `prototype`). | none |
 | 429 | `RATE_LIMIT_EXCEEDED` | `topolab_rate_limit_error` | The API key passed its per-minute rate limit. The response also carries a `Retry-After` header. | `retryAfter` (seconds), `limit`, `remaining` (numbers), `resetAt` (ISO 8601 timestamp) |
 | 429 | `USAGE_QUOTA_EXCEEDED` | `topolab_rate_limit_error` | The API key has used up its usage quota. Waiting does not help; `$retry_after` is `NULL`. | `quota`, `used` (numbers) |
+| 503 | `FILE_PREPARING` | `topolab_server_error` | The file is being built. The old download routes answer it with a `Retry-After` header and the SDK retries it; `tl_download()` and `tl_archive()` also raise it, with status 202, when a file is still being prepared after 30 minutes of waiting on the link route. | `retryAfter` (seconds), `linkRoute` (path); from the SDK's own wait: `retryAfter`, `build` |
+| 503 | `FILE_BUILD_FAILED` | `topolab_server_error` | The file could not be built. Retried like any 503, then raised. | `retryAfter`, `linkRoute` |
+| 413 | `FILE_TOO_LARGE` | `topolab_validation_error` | The file is too large for the old current-month route (`GET .../files/{format}`); the link route, which `tl_download()` uses, serves it. | `linkRoute` (path) |
 
 Numeric codes that carry `$details`:
 

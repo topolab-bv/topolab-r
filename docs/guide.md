@@ -165,6 +165,33 @@ tl_download(ds, "dominos-nl.geojson", "geojson")
 `tl_download()` and `tl_archive()` stream to a temp file and rename atomically,
 so an interrupted transfer never leaves a truncated file at the destination.
 
+## How `tl_download()` and `tl_archive()` fetch a file
+
+Both ask the link route, `POST /v1/dataset/{table}/exports`, for a signed link
+to the file: `tl_download()` asks for the current month's file as it is
+(`list(format = ..., bundle = "file")`), `tl_archive()` for one month's zip
+(`list(format = ..., month = ..., bundle = "zip")`). The link is valid for 10
+minutes and is fetched with a plain `httr2::request(url)` that sends no API
+key, so the key never reaches the storage host.
+
+- **Ready (200):** the file is fetched from the link and written to `path`.
+- **Preparing (202):** the SDK waits the `retryAfterSeconds` the server names
+  (at least 1 second; 5 seconds when it names none) and asks again. Waiting
+  costs no credits. After 30 minutes it stops and raises a
+  `topolab_server_error` with `$code` `"FILE_PREPARING"` and the build id in
+  `$details$build`; the build keeps going on the server, so a later call finds
+  the file ready.
+- **Failed:** the server answers 503 with `$code` `"FILE_BUILD_FAILED"`. It is
+  retried like any 503 and then raised as a `topolab_server_error`.
+- **No link route (404 or 405):** a server that does not have the link route
+  yet gets today's request instead, `GET .../files/{format}` or
+  `GET .../archives/{month}/{format}`, with the same retries as before. This is
+  decided on every call; nothing is remembered between calls.
+- **Any other error** (402, 403, 5xx, ...) is raised as it was before; it never
+  falls back to the old route.
+
+`tl_sample()` and `tl_geojson()` are unchanged.
+
 ## Spatial objects (`sf`)
 
 ```r

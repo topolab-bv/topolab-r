@@ -17,6 +17,16 @@ tl_download(dataset, path, format = "geojson")
 The path, invisibly.
 }
 \description{
+Writes the current month's file. It asks the link route
+(`POST /v1/dataset/:table/exports`) for a signed link to the file and
+fetches it with a plain request that sends no API key. While the file is
+being prepared it waits the `retryAfterSeconds` the server names (at least 1
+second, 5 when it names none) and asks again, for at most 30 minutes, then
+raises a `topolab_server_error` with `code` `"FILE_PREPARING"`. A server
+without the link route (404 or 405) gets today's `GET .../files/:format`
+instead, decided on every call. Other errors (402, 403, 5xx) are raised.
+}
+\details{
 An unsupported `format` is rejected client-side as a
 `topolab_validation_error` rather than sent, matching the other Topolab SDKs
 and the server's 400.

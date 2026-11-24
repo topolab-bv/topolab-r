@@ -15,6 +15,7 @@ inherits from `topolab_error`.
 | `topolab_configuration_error` | client misconfiguration (missing key, invalid base URL) |
 | `topolab_validation_error` | invalid request parameters (400/4xx), including ones caught client-side |
 | `topolab_server_error` | upstream error (5xx), retried automatically |
+| `topolab_connection_error` | `tl_download()` or `tl_archive()` could not reach the storage host of the file's signed link (refused, timed out). The message names the host and path, never the link's signature. |
 
 ```r
 ds <- tl_dataset(tl, "nl-domino-poi")

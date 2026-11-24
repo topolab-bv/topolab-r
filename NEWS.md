@@ -14,6 +14,10 @@
   403 and 5xx answers from the link route are raised, never a fallback.
 * An error while fetching the signed link is raised with the class of its
   status and a message that does not repeat the storage host's body.
+* A storage host that cannot be reached for a signed link (refused, timed out)
+  raises a `topolab_connection_error`. Its message names the host and path and
+  never the link's query (the signature); httr2's own failure, which keeps the
+  whole request, is not passed on.
 * A download now always writes the response body to the destination, also when
   httr2 keeps it in memory (a mocked response), so no rename warning is left.
 * `tl_sample()` and `tl_geojson()` are unchanged.

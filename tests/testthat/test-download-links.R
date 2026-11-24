@@ -414,6 +414,93 @@ test_that("the signed URL request retries like every other request", {
   expect_equal(.dl_read(path), .dl_link_csv)
 })
 
+# --- the signed query never reaches a condition --------------------------------------
+#
+# The query of a signed link is its signature: a working bearer link to the file
+# for ten minutes. A failure to reach the storage host is raised as a
+# topolab_connection_error whose message, printed form and fields carry no part
+# of the query (httr2's own failure keeps the whole request, URL included).
+
+.dl_query <- sub("^[^?]*[?]", "", .dl_signed_url)
+.dl_query_parts <- c("X-Goog-Signature", "5f2d0c9e", "X-Goog-Credential", .dl_query)
+
+.dl_condition_text <- function(err) {
+  fields <- unlist(lapply(unclass(err), function(x) {
+    tryCatch(paste(deparse(x, nlines = -1L), collapse = "\n"), error = function(e) "")
+  }))
+  paste(c(conditionMessage(err), utils::capture.output(print(err)), fields,
+          if (!is.null(err$parent)) conditionMessage(err$parent)), collapse = "\n")
+}
+
+# The link route answers a ready link to `url`; the signed request goes out to
+# the real network (a local address) instead of the mock.
+.dl_ready_at <- function(url, env = parent.frame()) {
+  httr2::local_mocked_responses(function(req) {
+    if (grepl("/exports$", req$url)) {
+      return(.dl_json(200, list(state = "ready", url = url, build = .dl_build)))
+    }
+    NULL
+  }, env = env)
+}
+
+.dl_closed_port <- function() {
+  for (port in sample(49152:65000, 20)) {
+    sock <- tryCatch(serverSocket(port), error = function(e) NULL)
+    if (!is.null(sock)) {
+      close(sock)
+      return(port)
+    }
+  }
+  skip("no free local port")
+}
+
+test_that("a refused connection to the storage host carries no part of the query", {
+  .dl_clock()
+  url <- paste0("http://127.0.0.1:", .dl_closed_port(), .dl_signed_path, "?", .dl_query)
+  .dl_ready_at(url)
+  dir <- withr::local_tempdir()
+
+  err <- expect_error(tl_download(.dl_dataset(), file.path(dir, "x.csv"), format = "csv"),
+                      class = "topolab_connection_error")
+
+  expect_s3_class(err, "topolab_error")
+  text <- .dl_condition_text(err)
+  for (part in .dl_query_parts) expect_false(grepl(part, text, fixed = TRUE), info = part)
+  expect_null(err$request)
+  # It still says where it failed: the host and the path.
+  expect_true(grepl(.dl_signed_path, conditionMessage(err), fixed = TRUE))
+  expect_equal(list.files(dir, all.files = TRUE, no.. = TRUE), character(0))
+})
+
+test_that("a storage host that never answers carries no part of the query", {
+  .dl_clock()
+  port <- .dl_closed_port()
+  hang <- serverSocket(port)
+  on.exit(close(hang), add = TRUE)
+  url <- paste0("http://127.0.0.1:", port, .dl_signed_path, "?", .dl_query)
+  .dl_ready_at(url)
+  ds <- tl_dataset(tl_client(api_key = "tlb_test_key", base_url = "https://api.topolab.nl",
+                             timeout = 1, max_retries = 0), .dl_table)
+
+  err <- expect_error(tl_archive(ds, withr::local_tempfile(fileext = ".zip"),
+                                 month = "2026-11", format = "csv"),
+                      class = "topolab_connection_error")
+
+  text <- .dl_condition_text(err)
+  for (part in .dl_query_parts) expect_false(grepl(part, text, fixed = TRUE), info = part)
+})
+
+test_that("an API request's connection failure is left as httr2 raises it", {
+  port <- .dl_closed_port()
+  ds <- tl_dataset(tl_client(api_key = "tlb_test_key",
+                             base_url = paste0("http://127.0.0.1:", port), max_retries = 0),
+                   .dl_table)
+
+  err <- expect_error(tl_download(ds, withr::local_tempfile(fileext = ".csv"), format = "csv"))
+
+  expect_s3_class(err, "httr2_failure")
+})
+
 # --- tl_sample() is unchanged -------------------------------------------------------
 
 test_that("tl_sample reads the sample route and never the link route", {

@@ -53,6 +53,28 @@
   stop(cnd)
 }
 
+# A signed link the storage host could not be reached on (refused, timed out,
+# ...): a topolab_connection_error whose message names the host and path and
+# never the query. The query is the link's signature, a working bearer link to
+# the file for ten minutes; httr2's own failure keeps the request, URL
+# included, so neither it nor its parent is kept.
+.tl_abort_signed_link_failure <- function(e, url) {
+  cause <- if (!is.null(e$parent)) conditionMessage(e$parent) else conditionMessage(e)
+  cause <- .tl_without_query(cause, url)
+  stop(topolab_error(
+    sprintf("Could not fetch the file from its signed link (%s): %s",
+            sub("[?#].*$", "", url), trimws(gsub("[[:space:]]+", " ", cause))),
+    class = "topolab_connection_error"))
+}
+
+# `text` without any copy of `url`'s query.
+.tl_without_query <- function(text, url) {
+  query <- sub("#.*$", "", sub("^[^?]*[?]?", "", url))
+  if (!grepl("?", url, fixed = TRUE) || !nzchar(query)) return(text)
+  text <- gsub(paste0("?", query), "", text, fixed = TRUE)
+  gsub(query, "[query removed]", text, fixed = TRUE)
+}
+
 .tl_link_seconds <- function(x) {
   if (is.null(x) || length(x) != 1L || !is.numeric(x) || !is.finite(x) || x < 0) NULL else x
 }
@@ -112,8 +134,10 @@
     if (status >= 400) abort_from_response(resp)
     answer <- .tl_link_answer(resp)
     if (identical(answer$state, "ready")) {
-      return(.tl_stream_to_file(.tl_signed_req(client, answer$url), path,
-                                on_error = .tl_abort_signed_link))
+      req <- .tl_signed_req(client, answer$url)
+      return(tryCatch(
+        .tl_stream_to_file(req, path, on_error = .tl_abort_signed_link),
+        httr2_failure = function(e) .tl_abort_signed_link_failure(e, req$url)))
     }
     if (.tl_now() - started + answer$wait > .tl_link_max_wait) .tl_link_still_preparing(answer)
     .tl_sleep(answer$wait)

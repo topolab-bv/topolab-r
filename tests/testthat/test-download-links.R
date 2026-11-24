@@ -513,3 +513,55 @@ test_that("tl_sample reads the sample route and never the link route", {
   expect_equal(out$type, "FeatureCollection")
   expect_equal(srv$all(), paste0("GET /v1/dataset/", .dl_table, "/sample/geojson"))
 })
+
+test_that("a failure that quotes a redirect's signed link carries no part of its query", {
+  # The storage host can redirect to a second signed link (a mirror, another
+  # bucket), whose query is a signature too.
+  .dl_clock()
+  second <- "X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=R2KEY%2F20261203&X-Amz-Signature=c0ffee77"
+  httr2::local_mocked_responses(function(req) {
+    if (grepl("/exports$", req$url)) {
+      return(.dl_json(200, list(state = "ready", url = .dl_signed_url, build = .dl_build)))
+    }
+    rlang::abort("Failed to perform HTTP request.", class = c("httr2_failure", "httr2_error"),
+                 parent = simpleError(paste0("proxy refused https://mirror.example/x.csv?", second)),
+                 request = req)
+  })
+
+  err <- expect_error(tl_download(.dl_dataset(), withr::local_tempfile(fileext = ".csv"), format = "csv"),
+                      class = "topolab_connection_error")
+
+  text <- .dl_condition_text(err)
+  for (part in c(.dl_query_parts, "X-Amz-Signature", "c0ffee77", "R2KEY")) {
+    expect_false(grepl(part, text, fixed = TRUE), info = part)
+  }
+  expect_true(grepl("https://mirror.example/x.csv", conditionMessage(err), fixed = TRUE))
+})
+
+test_that("httr2's verbose output of the signed fetch carries no part of the query", {
+  # A script with options(httr2_verbosity = 1) prints every request line httr2
+  # sends; the signed link's line would hold its signature.
+  .dl_clock()
+  withr::local_options(httr2_verbosity = 1)
+  port <- .dl_closed_port()
+  hang <- serverSocket(port)
+  on.exit(close(hang), add = TRUE)
+  url <- paste0("http://127.0.0.1:", port, .dl_signed_path, "?", .dl_query)
+  .dl_ready_at(url)
+  ds <- tl_dataset(tl_client(api_key = "tlb_test_key", base_url = "https://api.topolab.nl",
+                             timeout = 1, max_retries = 0), .dl_table)
+
+  said <- character(0)
+  out <- utils::capture.output(
+    withCallingHandlers(
+      tryCatch(tl_download(ds, withr::local_tempfile(fileext = ".csv"), format = "csv"),
+               topolab_connection_error = function(e) NULL),
+      message = function(m) {
+        said <<- c(said, conditionMessage(m))
+        invokeRestart("muffleMessage")
+      }),
+    type = "output")
+
+  text <- paste(c(out, said), collapse = "\n")
+  for (part in .dl_query_parts) expect_false(grepl(part, text, fixed = TRUE), info = part)
+})

@@ -60,7 +60,7 @@
 # included, so neither it nor its parent is kept.
 .tl_abort_signed_link_failure <- function(e, url) {
   cause <- if (!is.null(e$parent)) conditionMessage(e$parent) else conditionMessage(e)
-  cause <- .tl_without_query(cause, url)
+  cause <- .tl_without_url_queries(.tl_without_query(cause, url))
   stop(topolab_error(
     sprintf("Could not fetch the file from its signed link (%s): %s",
             sub("[?#].*$", "", url), trimws(gsub("[[:space:]]+", " ", cause))),
@@ -73,6 +73,15 @@
   if (!grepl("?", url, fixed = TRUE) || !nzchar(query)) return(text)
   text <- gsub(paste0("?", query), "", text, fixed = TRUE)
   gsub(query, "[query removed]", text, fixed = TRUE)
+}
+
+# `text` without the query of any absolute URL it quotes: from the "?" up to the
+# next space or quote, leaving punctuation that closes the sentence (a ")" after
+# the URL) in place. The storage host can redirect to a second signed link,
+# whose query is a signature too.
+.tl_without_url_queries <- function(text) {
+  gsub("(?i)(\\b[a-z][a-z0-9+.-]*://[^\\s?#\"'<>]*)\\?[^\\s\"'<>]*?(?=[)\\]}>,;.:!]*(?:[\\s\"'<>]|$))",
+       "\\1", text, perl = TRUE)
 }
 
 .tl_link_seconds <- function(x) {
@@ -136,7 +145,7 @@
     if (identical(answer$state, "ready")) {
       req <- .tl_signed_req(client, answer$url)
       return(tryCatch(
-        .tl_stream_to_file(req, path, on_error = .tl_abort_signed_link),
+        .tl_stream_to_file(req, path, on_error = .tl_abort_signed_link, verbosity = 0L),
         httr2_failure = function(e) .tl_abort_signed_link_failure(e, req$url)))
     }
     if (.tl_now() - started + answer$wait > .tl_link_max_wait) .tl_link_still_preparing(answer)

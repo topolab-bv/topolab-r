@@ -66,11 +66,13 @@ tl_geojson <- function(dataset) {
 # destination so an error response is never written to `path`, and a partial
 # download (connection dropped mid-body) cannot leave a truncated file at the
 # destination. Status is checked before the atomic rename. `on_error` maps an
-# error response to a condition.
-.tl_stream_to_file <- function(req, path, on_error = abort_from_response) {
+# error response to a condition; `verbosity` is passed to httr2::req_perform()
+# (NULL follows the `httr2_verbosity` option; the signed fetch passes 0 so the
+# signed link's request line is never printed).
+.tl_stream_to_file <- function(req, path, on_error = abort_from_response, verbosity = NULL) {
   tmp <- tempfile(tmpdir = dirname(path), fileext = ".part")
   on.exit(if (file.exists(tmp)) unlink(tmp), add = TRUE)
-  resp <- httr2::req_perform(req, path = tmp)
+  resp <- httr2::req_perform(req, path = tmp, verbosity = verbosity)
   if (httr2::resp_status(resp) >= 400) on_error(resp)
   # A response whose body httr2 kept in memory (a mocked response) has written
   # nothing to `tmp`; write it, so the destination always holds the body.

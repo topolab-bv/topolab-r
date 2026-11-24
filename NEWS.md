@@ -17,7 +17,11 @@
 * A storage host that cannot be reached for a signed link (refused, timed out)
   raises a `topolab_connection_error`. Its message names the host and path and
   never the link's query (the signature); httr2's own failure, which keeps the
-  whole request, is not passed on.
+  whole request, is not passed on. The query of any other URL the cause quotes
+  (a redirect from the storage host to a second signed link) is removed too.
+* The signed fetch runs at httr2 verbosity 0, so a script that sets
+  `options(httr2_verbosity = ...)` never prints the signed link's request line
+  with its signature. API requests follow the option as before.
 * A download now always writes the response body to the destination, also when
   httr2 keeps it in memory (a mocked response), so no rename warning is left.
 * `tl_sample()` and `tl_geojson()` are unchanged.

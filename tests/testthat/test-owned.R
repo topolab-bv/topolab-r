@@ -103,22 +103,35 @@ test_that("tl_archives lists months newest first", {
 })
 
 # httr2's mock layer returns the mocked response before `req_perform()` ever
-# looks at its `path=` argument, so a mocked download writes no file and
-# `expect_true(file.exists(path))` here can never pass — do not "fix" these
-# tests by adding one. What they assert instead is the URL the download streams
-# from and the returned path; the rename warning from the absent stream is a
-# mocking artefact and is suppressed.
+# looks at its `path=` argument and keeps the body in memory; the download
+# helper writes that body to the destination itself, so no rename warning is
+# left to suppress. These tests assert the URL the download streams from and the
+# returned path; test-download-links.R asserts the bytes written.
+# These tests pin the old archive route. The mocked server has no link route:
+# it answers POST .../exports as staging did on 2026-11-24, so tl_archive()
+# falls back to GET .../archives/{month}/{format}.
+.no_link_route <- function(req) {
+  path <- httr2::url_parse(req$url)$path
+  if (!is.null(req$body) && grepl("/exports$", path)) {
+    return(httr2::response(
+      status_code = 404, headers = list(`Content-Type` = "application/json"),
+      body = charToRaw(sprintf('{"code":404,"message":"Cannot POST %s"}', path))))
+  }
+  NULL
+}
+
 test_that("tl_archive addresses the requested month and format", {
   cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl")
   requested <- NA_character_
   httr2::local_mocked_responses(function(req) {
+    no_route <- .no_link_route(req)
+    if (!is.null(no_route)) return(no_route)
     requested <<- httr2::url_parse(req$url)$path
     httr2::response(200, headers = list(`Content-Type` = "application/zip"),
                     body = charToRaw("PK"))
   })
   path <- withr::local_tempfile(fileext = ".zip")
-  out <- suppressWarnings(
-    tl_archive(tl_dataset(cl, "nl-domino-poi"), path, month = "2026-07", format = "csv"))
+  out <- tl_archive(tl_dataset(cl, "nl-domino-poi"), path, month = "2026-07", format = "csv")
   expect_equal(out, path)
   expect_equal(requested, "/v1/dataset/nl-domino-poi/archives/2026-07/csv")
 })
@@ -127,25 +140,28 @@ test_that("tl_archive normalises 'latest' and defaults to the newest geojson", {
   cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl")
   requested <- NA_character_
   httr2::local_mocked_responses(function(req) {
+    no_route <- .no_link_route(req)
+    if (!is.null(no_route)) return(no_route)
     requested <<- httr2::url_parse(req$url)$path
     httr2::response(200, headers = list(`Content-Type` = "application/zip"),
                     body = charToRaw("PK"))
   })
   path <- withr::local_tempfile(fileext = ".zip")
-  suppressWarnings(tl_archive(tl_dataset(cl, "nl-domino-poi"), path, month = "LATEST"))
+  tl_archive(tl_dataset(cl, "nl-domino-poi"), path, month = "LATEST")
   expect_equal(requested, "/v1/dataset/nl-domino-poi/archives/latest/geojson")
 })
 
 test_that("tl_archive accepts the three month forms", {
   cl <- tl_client(api_key = "k", base_url = "https://api.topolab.nl")
   httr2::local_mocked_responses(function(req) {
-    httr2::response(200, headers = list(`Content-Type` = "application/zip"),
-                    body = charToRaw("PK"))
+    .no_link_route(req) %||%
+      httr2::response(200, headers = list(`Content-Type` = "application/zip"),
+                      body = charToRaw("PK"))
   })
   ds <- tl_dataset(cl, "nl-domino-poi")
   for (month in c("latest", "Latest", "2026-07", "2026-07-15", "2024-02-29", "1999-12-31")) {
     path <- withr::local_tempfile(fileext = ".zip")
-    expect_equal(suppressWarnings(tl_archive(ds, path, month = month, format = "csv")), path)
+    expect_equal(tl_archive(ds, path, month = month, format = "csv"), path)
   }
 })
 

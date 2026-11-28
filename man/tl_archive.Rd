@@ -34,4 +34,8 @@ server's 400. A well-formed month with no archive available is a
 `topolab_not_found_error` (404) — months outside your retention window and
 months that have not started both answer 404 and are deliberately
 indistinguishable, so the response never reveals an archive you cannot access.
+
+The zip comes through the link route, like [tl_download()]: a signed link
+fetched without the API key, waiting while the file is prepared, and today's
+`GET .../archives/:month/:format` on a server without the link route.
 }

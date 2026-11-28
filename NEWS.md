@@ -1,5 +1,38 @@
 # topolab (development version)
 
+* `tl_download()` writes the build's documents the link route names beside the
+  file: `<path>.columns.json` and `<path>.notices/<name>`, fetched like the
+  file, without the API key. A notice whose name is not a plain file name is
+  skipped; a document that cannot be fetched fails the call. `tl_archive()`
+  writes the zip only, which holds them.
+* `tl_download()` and `tl_archive()` fetch files through the link route,
+  `POST /v1/dataset/{table}/exports`: `tl_download()` asks for the current
+  month's file (`bundle = "file"`), `tl_archive()` for one month's zip
+  (`month`, `bundle = "zip"`). A 200 names a 10-minute signed link, fetched
+  with a plain `httr2::request(url)` that sends no API key. A 202 means the file
+  is being prepared: the SDK waits `retryAfterSeconds` (at least 1 second, 5
+  when absent) and asks again, for at most 30 minutes, then raises a
+  `topolab_server_error` with `$code` `"FILE_PREPARING"` and `$details$build`.
+* A 404 or 405 from the link route (a server without it) falls back, on that
+  call only, to the old route (`GET .../files/{format}` or
+  `GET .../archives/{month}/{format}`) with today's behaviour and retries. 402,
+  403 and 5xx answers from the link route are raised, never a fallback.
+* An error while fetching the signed link is raised with the class of its
+  status and a message that does not repeat the storage host's body.
+* A storage host that cannot be reached for a signed link (refused, timed out)
+  raises a `topolab_connection_error`. Its message names the host and path and
+  never the link's query (the signature); httr2's own failure, which keeps the
+  whole request, is not passed on. The query of any other URL the cause quotes
+  (a redirect from the storage host to a second signed link) is removed too.
+* The signed fetch runs at httr2 verbosity 0, so a script that sets
+  `options(httr2_verbosity = ...)` never prints the signed link's request line
+  with its signature. API requests follow the option as before.
+* A download now always writes the response body to the destination, also when
+  httr2 keeps it in memory (a mocked response), so no rename warning is left.
+* `tl_sample()` and `tl_geojson()` are unchanged.
+* `docs/errors.md` lists `FILE_PREPARING`, `FILE_BUILD_FAILED` and
+  `FILE_TOO_LARGE`.
+
 * The staging base URL is now `https://api.topolab.dev` (was
   `https://api-staging.topolab.nl`). `environment = "staging"` resolves to it.
 

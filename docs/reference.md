@@ -24,9 +24,9 @@ tl_dataset(client, slug)  # lazy handle for one dataset
 | `tl_metadata(dataset, locale = NULL)` | list | Dataset metadata |
 | `tl_sample(dataset, format = "geojson")` | list \| character | Free preview; `csv`/`json`/`geojson`/`kml` |
 | `tl_geojson(dataset)` | list | Full dataset (requires `api-access`) |
-| `tl_download(dataset, path, format = "geojson")` | path (invisibly) | Streamed; `csv`/`json`/`geojson`/`kml`/`shp`, checked client-side |
+| `tl_download(dataset, path, format = "geojson")` | path (invisibly) | Streamed through a signed link (old route on a server without the link route); `csv`/`json`/`geojson`/`kml`/`shp`, checked client-side |
 | `tl_archives(dataset)` | list | Monthly archives, newest first (`month`, `formats`, `archiveDate`) |
-| `tl_archive(dataset, path, month = "latest", format = "geojson")` | path (invisibly) | Streamed zip; `month` is `latest`/`YYYY-MM`/`YYYY-MM-DD` |
+| `tl_archive(dataset, path, month = "latest", format = "geojson")` | path (invisibly) | Streamed zip through a signed link (old route on a server without the link route); `month` is `latest`/`YYYY-MM`/`YYYY-MM-DD` |
 | `tl_coordinates(dataset, limit = NULL, offset = NULL)` | list | Coordinate rows; paging in attributes; `limit` ≤ 50000 |
 | `tl_sql(client, query, max_rows = NULL)` | data.frame | Enterprise `sql-access`; result metadata in attributes |
 | `tl_items(dataset, bbox, limit = 100, offset, category, city, country)` | list | One page of OGC features |

@@ -565,3 +565,90 @@ test_that("httr2's verbose output of the signed fetch carries no part of the que
   text <- paste(c(out, said), collapse = "\n")
   for (part in .dl_query_parts) expect_false(grepl(part, text, fixed = TRUE), info = part)
 })
+
+# --- the build's documents beside a plain file ------------------------------
+
+# tl_download() writes the build's documents beside the file: the link route's
+# 200 names signed links to its columns.json and each notice file, fetched like
+# the file (no API key), written as <path>.columns.json and
+# <path>.notices/<name>. A notice whose name is not a plain file name is
+# skipped; a document that cannot be fetched fails the call. tl_archive()
+# writes the zip only: it holds the documents itself.
+
+.doc_prefix <- paste0("/platform-staging-datasets/exports/", .dl_table,
+                      "/2026-12/standard/20261202T020000Z-a1b2c3d4-w1")
+.doc_query <- "?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Expires=600&X-Goog-SignedHeaders=host&X-Goog-Signature=5f2d0c9e"
+.doc_columns_path <- paste0(.doc_prefix, "/columns.json")
+.doc_notice_path <- paste0(.doc_prefix, "/notices/osm.txt")
+.doc_columns <- "{\"tier\":\"standard\",\"columns\":[{\"name\":\"location_name\"}]}"
+.doc_notice <- "OpenStreetMap contributors, ODbL 1.0\n"
+
+.doc_ready <- function(notice_name = "osm.txt", columns = TRUE, month = "2026-12") {
+  documents <- list(
+    columns = if (columns) paste0("https://storage.googleapis.com", .doc_columns_path, .doc_query) else NULL,
+    notices = list(list(name = notice_name,
+                        url = paste0("https://storage.googleapis.com", .doc_notice_path, .doc_query))))
+  if (!columns) documents$columns <- NA
+  .dl_json(200, list(state = "ready", url = .dl_signed_url, expiresAt = "2026-12-03T10:10:00.000Z",
+                     tier = "standard", month = month, build = .dl_build, documents = documents))
+}
+
+test_that("tl_download writes <path>.columns.json and <path>.notices/<name>, fetched without the key", {
+  .dl_clock()
+  srv <- .dl_server(stats::setNames(
+    list(.doc_ready(), .dl_bytes(200, .dl_link_csv), .dl_bytes(200, .doc_columns, "application/json"),
+         .dl_bytes(200, .doc_notice, "text/plain")),
+    c(.dl_link, .dl_signed, paste("GET", .doc_columns_path), paste("GET", .doc_notice_path))))
+  dir <- withr::local_tempdir()
+  path <- file.path(dir, "mcdonalds.csv")
+
+  tl_download(.dl_dataset(), path, format = "csv")
+
+  expect_equal(.dl_read(path), .dl_link_csv)
+  expect_equal(.dl_read(paste0(path, ".columns.json")), .doc_columns)
+  expect_equal(.dl_read(file.path(paste0(path, ".notices"), "osm.txt")), .doc_notice)
+  for (route in c(paste("GET", .doc_columns_path), paste("GET", .doc_notice_path))) {
+    seen <- srv$seen(route)[[1]]
+    expect_null(.dl_header(seen, "X-API-Key"))
+    expect_true(endsWith(seen$url, .doc_query))
+  }
+})
+
+test_that("tl_download skips a notice whose name is not a plain file name", {
+  .dl_clock()
+  srv <- .dl_server(stats::setNames(
+    list(.doc_ready(notice_name = "../escape.txt", columns = FALSE), .dl_bytes(200, .dl_link_csv)),
+    c(.dl_link, .dl_signed)))
+  dir <- withr::local_tempdir()
+
+  tl_download(.dl_dataset(), file.path(dir, "mcdonalds.csv"), format = "csv")
+
+  expect_equal(sort(list.files(dir, all.files = TRUE, no.. = TRUE)), "mcdonalds.csv")
+  expect_equal(srv$count(paste("GET", .doc_notice_path)), 0)
+})
+
+test_that("a document that cannot be fetched fails the call, without the signed query", {
+  .dl_clock()
+  .dl_server(stats::setNames(
+    list(.doc_ready(), .dl_bytes(200, .dl_link_csv), .dl_bytes(200, .doc_columns, "application/json"),
+         .dl_bytes(403, "<Error>SignatureDoesNotMatch</Error>", "application/xml")),
+    c(.dl_link, .dl_signed, paste("GET", .doc_columns_path), paste("GET", .doc_notice_path))))
+  dir <- withr::local_tempdir()
+
+  err <- tryCatch(tl_download(.dl_dataset(), file.path(dir, "m.csv"), format = "csv"), topolab_error = function(e) e)
+  expect_s3_class(err, "topolab_error")
+  expect_false(grepl("X-Goog-Signature", conditionMessage(err), fixed = TRUE))
+})
+
+test_that("tl_archive writes the zip only: it holds the documents", {
+  .dl_clock()
+  srv <- .dl_server(stats::setNames(
+    list(.doc_ready(month = "2026-11"), .dl_bytes(200, .dl_zip, "application/zip")),
+    c(.dl_link, .dl_signed)))
+  dir <- withr::local_tempdir()
+
+  tl_archive(.dl_dataset(), file.path(dir, "november.zip"), month = "2026-11", format = "csv")
+
+  expect_equal(list.files(dir, all.files = TRUE, no.. = TRUE), "november.zip")
+  expect_equal(srv$count(paste("GET", .doc_columns_path)), 0)
+})

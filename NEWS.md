@@ -1,5 +1,10 @@
 # topolab (development version)
 
+* `tl_download()` writes the build's documents the link route names beside the
+  file: `<path>.columns.json` and `<path>.notices/<name>`, fetched like the
+  file, without the API key. A notice whose name is not a plain file name is
+  skipped; a document that cannot be fetched fails the call. `tl_archive()`
+  writes the zip only, which holds them.
 * `tl_download()` and `tl_archive()` fetch files through the link route,
   `POST /v1/dataset/{table}/exports`: `tl_download()` asks for the current
   month's file (`bundle = "file"`), `tl_archive()` for one month's zip

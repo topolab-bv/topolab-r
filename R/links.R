@@ -114,9 +114,40 @@
   url <- body$url
   if (status == 200L && identical(body$state, "ready") && is.character(url) &&
       length(url) == 1L && !is.na(url) && nzchar(url)) {
-    return(list(state = "ready", url = url))
+    return(list(state = "ready", url = url, documents = .tl_link_documents(body$documents)))
   }
   .tl_link_unexpected(resp)
+}
+
+# A notice name the SDK writes: a plain file name, never a path.
+.tl_notice_name <- "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+
+.tl_single_string <- function(x) is.character(x) && length(x) == 1L && !is.na(x) && nzchar(x)
+
+# The build's documents a 200 names, as list(url, name, kind) entries: its
+# columns.json and each notice file. A notice whose name is not a plain file
+# name is skipped.
+.tl_link_documents <- function(named) {
+  if (!is.list(named)) return(list())
+  out <- list()
+  if (.tl_single_string(named$columns)) {
+    out[[length(out) + 1L]] <- list(url = named$columns, name = "columns.json", kind = "columns")
+  }
+  for (notice in if (is.list(named$notices)) named$notices else list()) {
+    if (is.list(notice) && .tl_single_string(notice$name) && grepl(.tl_notice_name, notice$name) &&
+        .tl_single_string(notice$url)) {
+      out[[length(out) + 1L]] <- list(url = notice$url, name = notice$name, kind = "notice")
+    }
+  }
+  out
+}
+
+# Fetch one signed link to `path` without the API key (the file, or a document).
+.tl_fetch_signed <- function(client, url, path) {
+  req <- .tl_signed_req(client, url)
+  tryCatch(
+    .tl_stream_to_file(req, path, on_error = .tl_abort_signed_link, verbosity = 0L),
+    httr2_failure = function(e) .tl_abort_signed_link_failure(e, req$url))
 }
 
 .tl_link_still_preparing <- function(answer) {
@@ -143,10 +174,20 @@
     if (status >= 400) abort_from_response(resp)
     answer <- .tl_link_answer(resp)
     if (identical(answer$state, "ready")) {
-      req <- .tl_signed_req(client, answer$url)
-      return(tryCatch(
-        .tl_stream_to_file(req, path, on_error = .tl_abort_signed_link, verbosity = 0L),
-        httr2_failure = function(e) .tl_abort_signed_link_failure(e, req$url)))
+      .tl_fetch_signed(client, answer$url, path)
+      # A plain file gets the build's documents beside it, fetched the same way
+      # (a zip holds them): <path>.columns.json and <path>.notices/<name>. One
+      # that cannot be fetched fails the call: the notices carry the licences.
+      if (identical(body$bundle, "file")) {
+        for (document in answer$documents) {
+          target <- if (identical(document$kind, "columns")) paste0(path, ".columns.json") else {
+            dir.create(paste0(path, ".notices"), showWarnings = FALSE, recursive = TRUE)
+            file.path(paste0(path, ".notices"), document$name)
+          }
+          .tl_fetch_signed(client, document$url, target)
+        }
+      }
+      return(invisible(path))
     }
     if (.tl_now() - started + answer$wait > .tl_link_max_wait) .tl_link_still_preparing(answer)
     .tl_sleep(answer$wait)

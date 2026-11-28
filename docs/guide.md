@@ -175,6 +175,11 @@ minutes and is fetched with a plain `httr2::request(url)` that sends no API
 key, so the key never reaches the storage host.
 
 - **Ready (200):** the file is fetched from the link and written to `path`.
+  `tl_download()` also writes the build's documents beside it, fetched the same
+  way: `<path>.columns.json` (the columns the file holds, with their tier) and
+  each notice as `<path>.notices/<name>` (the licences and attributions the
+  data needs). A document that cannot be fetched fails the call.
+  `tl_archive()` writes the zip only, which holds the same documents.
 - **Preparing (202):** the SDK waits the `retryAfterSeconds` the server names
   (at least 1 second; 5 seconds when it names none) and asks again. Waiting
   costs no credits. After 30 minutes it stops and raises a

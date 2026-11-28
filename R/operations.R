@@ -94,6 +94,11 @@ tl_geojson <- function(dataset) {
 #' without the link route (404 or 405) gets today's `GET .../files/:format`
 #' instead, decided on every call. Other errors (402, 403, 5xx) are raised.
 #'
+#' The build's documents the link route names are written beside the file,
+#' fetched the same way: `<path>.columns.json` (the columns the file holds) and
+#' each notice as `<path>.notices/<name>` (the licences and attributions the
+#' data needs). A document that cannot be fetched fails the call.
+#'
 #' An unsupported `format` is rejected client-side as a
 #' `topolab_validation_error` rather than sent, matching the other Topolab SDKs
 #' and the server's 400.
